@@ -1,24 +1,29 @@
 {{define "content"}}
 <h2>{{T "Dashboard"}}</h2>
+
 <h3>{{T "CreateWallet"}}</h3>
-<form method="POST" action="/famoney/wallet/create" class="form-inline">
-  <input name="name" placeholder="{{T "WalletName"}}">
-  <input name="currency" placeholder="{{T "Currency"}}" value="USD">
-  <button type="submit">{{T "Add"}}</button>
+<form method="POST" action="/famoney/wallet/create" class="row g-2 mb-4">
+  <div class="col-md-4"><input class="form-control" name="name" placeholder="{{T "WalletName"}}"></div>
+  <div class="col-md-4"><input class="form-control" name="currency" placeholder="{{T "Currency"}}" value="USD"></div>
+  <div class="col-md-2"><button type="submit" class="btn btn-success w-100">{{T "Add"}}</button></div>
 </form>
 
 <h3>{{T "AddCategory"}}</h3>
-<form method="POST" action="/famoney/category/add" class="form-inline">
-  <input name="name" placeholder="{{T "Category"}}">
-  <button type="submit">{{T "Add"}}</button>
+<form method="POST" action="/famoney/category/add" class="row g-2 mb-4">
+  <div class="col-md-6"><input class="form-control" name="name" placeholder="{{T "Category"}}"></div>
+  <div class="col-md-2"><button type="submit" class="btn btn-success w-100">{{T "Add"}}</button></div>
 </form>
 
-<div class="wallets">
+<div class="row">
 {{range .Wallets}}
-  <div class="wallet">
-    <h4>{{.Name}} ({{.Currency}})</h4>
-    <p>{{T "Balance"}}: {{.Balance}} {{.Currency}} (~{{printf "%.2f" (Convert .Balance .Currency "USD")}} USD)</p>
-    <a href="/famoney/wallet/{{.ID}}">{{T "Add"}}</a>
+  <div class="col-md-4 mb-3">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">{{.Name}} ({{.Currency}})</h4>
+        <p class="card-text">{{T "Balance"}}: {{.Balance}} {{.Currency}} (~{{printf "%.2f" (Convert .Balance .Currency "USD")}} USD)</p>
+        <a href="/famoney/wallet/{{.ID}}" class="btn btn-primary">{{T "Add"}}</a>
+      </div>
+    </div>
   </div>
 {{else}}
   <p>No wallets</p>

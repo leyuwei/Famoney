@@ -3,43 +3,53 @@
 <p>{{T "Balance"}}: {{.Wallet.Balance}} {{.Wallet.Currency}}</p>
 
 <h3>{{T "Add"}} {{T "Amount"}}</h3>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}">
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
   <input type="hidden" name="action" value="flow">
-  <input name="amount" placeholder="{{T "Amount"}}">
-  <select name="category">
-    {{range $id, $c := .Categories}}
-      <option value="{{$id}}">{{$c.Name}}</option>
-    {{end}}
-  </select>
-  <input name="description" placeholder="{{T "Description"}}">
-  <button type="submit">{{T "Submit"}}</button>
+  <div class="row g-2">
+    <div class="col-md-3"><input class="form-control" name="amount" placeholder="{{T "Amount"}}"></div>
+    <div class="col-md-3">
+      <select name="category" class="form-select">
+        {{range $id, $c := .Categories}}
+          <option value="{{$id}}">{{$c.Name}}</option>
+        {{end}}
+      </select>
+    </div>
+    <div class="col-md-4"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
+  </div>
 </form>
 
 <h3>{{T "UpdateBalance"}}</h3>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}">
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
   <input type="hidden" name="action" value="balance">
-  <input name="amount" placeholder="{{T "Balance"}}">
-  <select name="category">
-    {{range $id, $c := .Categories}}
-      <option value="{{$id}}">{{$c.Name}}</option>
-    {{end}}
-  </select>
-  <input name="description" placeholder="{{T "Description"}}">
-  <button type="submit">{{T "Submit"}}</button>
+  <div class="row g-2">
+    <div class="col-md-3"><input class="form-control" name="amount" placeholder="{{T "Balance"}}"></div>
+    <div class="col-md-3">
+      <select name="category" class="form-select">
+        {{range $id, $c := .Categories}}
+          <option value="{{$id}}">{{$c.Name}}</option>
+        {{end}}
+      </select>
+    </div>
+    <div class="col-md-4"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
+  </div>
 </form>
 
 <h3>Flows</h3>
-<table>
-<tr><th>{{T "Amount"}}</th><th>{{T "Category"}}</th><th>{{T "Description"}}</th><th>Time</th></tr>
+<table class="table table-striped">
+<thead><tr><th>{{T "Amount"}}</th><th>{{T "Category"}}</th><th>{{T "Description"}}</th><th>Time</th></tr></thead>
+<tbody>
 {{range .Flows}}
 <tr>
   <td>{{.Amount}}</td>
-  <td>{{index $.Categories .CategoryID}.Name}}</td>
+  <td>{{(index $.Categories .CategoryID).Name}}</td>
   <td>{{.Description}}</td>
   <td>{{.CreatedAt}}</td>
 </tr>
 {{else}}
 <tr><td colspan="4">No flows</td></tr>
 {{end}}
+</tbody>
 </table>
 {{end}}
