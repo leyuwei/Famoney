@@ -1,0 +1,45 @@
+{{define "content"}}
+<h2>{{.Wallet.Name}}</h2>
+<p>{{T "Balance"}}: {{.Wallet.Balance}} {{.Wallet.Currency}}</p>
+
+<h3>{{T "Add"}} {{T "Amount"}}</h3>
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}">
+  <input type="hidden" name="action" value="flow">
+  <input name="amount" placeholder="{{T "Amount"}}">
+  <select name="category">
+    {{range $id, $c := .Categories}}
+      <option value="{{$id}}">{{$c.Name}}</option>
+    {{end}}
+  </select>
+  <input name="description" placeholder="{{T "Description"}}">
+  <button type="submit">{{T "Submit"}}</button>
+</form>
+
+<h3>{{T "UpdateBalance"}}</h3>
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}">
+  <input type="hidden" name="action" value="balance">
+  <input name="amount" placeholder="{{T "Balance"}}">
+  <select name="category">
+    {{range $id, $c := .Categories}}
+      <option value="{{$id}}">{{$c.Name}}</option>
+    {{end}}
+  </select>
+  <input name="description" placeholder="{{T "Description"}}">
+  <button type="submit">{{T "Submit"}}</button>
+</form>
+
+<h3>Flows</h3>
+<table>
+<tr><th>{{T "Amount"}}</th><th>{{T "Category"}}</th><th>{{T "Description"}}</th><th>Time</th></tr>
+{{range .Flows}}
+<tr>
+  <td>{{.Amount}}</td>
+  <td>{{index $.Categories .CategoryID}.Name}}</td>
+  <td>{{.Description}}</td>
+  <td>{{.CreatedAt}}</td>
+</tr>
+{{else}}
+<tr><td colspan="4">No flows</td></tr>
+{{end}}
+</table>
+{{end}}

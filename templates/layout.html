@@ -1,0 +1,22 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="UTF-8">
+<title>FaMoney</title>
+<link rel="stylesheet" href="/famoney/static/style.css">
+</head>
+<body>
+<nav class="topnav">
+  <a href="/famoney/dashboard">{{T "Dashboard"}}</a>
+  <a href="/famoney/logout">{{T "Logout"}}</a>
+  <span class="lang">
+    <a href="?lang=zh">中文</a> | <a href="?lang=en">EN</a>
+  </span>
+</nav>
+<div class="content">
+{{template "content" .}}
+</div>
+</body>
+</html>
+{{end}}

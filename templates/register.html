@@ -1,0 +1,9 @@
+{{define "content"}}
+<h2>{{T "Register"}}</h2>
+<form method="POST" action="/famoney/register">
+  <label>{{T "Username"}}: <input type="text" name="username"></label><br>
+  <label>{{T "Password"}}: <input type="password" name="password"></label><br>
+  <button type="submit">{{T "Submit"}}</button>
+</form>
+<p><a href="/famoney/login">{{T "Login"}}</a></p>
+{{end}}
