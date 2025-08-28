@@ -10,6 +10,50 @@ Family Finance Management Website built with Go and HTML templates.
 - 支持多币种及简单汇率换算
 - HTML 前端使用简洁卡片式布局
 
+## Database setup (MySQL)
+
+1. 安装并启动 MySQL，创建数据库与表：
+
+   ```sql
+   CREATE DATABASE famoney CHARACTER SET utf8mb4;
+   USE famoney;
+   CREATE TABLE users (
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       username VARCHAR(50) UNIQUE,
+       password VARCHAR(100)
+   );
+   CREATE TABLE wallets (
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       name VARCHAR(100),
+       currency VARCHAR(10),
+       balance DOUBLE
+   );
+   CREATE TABLE wallet_owners (
+       wallet_id INT,
+       user_id INT,
+       PRIMARY KEY(wallet_id, user_id)
+   );
+   CREATE TABLE categories (
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       name VARCHAR(50) UNIQUE
+   );
+   CREATE TABLE flows (
+       id INT AUTO_INCREMENT PRIMARY KEY,
+       wallet_id INT,
+       amount DOUBLE,
+       currency VARCHAR(10),
+       category_id INT,
+       description TEXT,
+       created_at DATETIME
+   );
+   ```
+
+2. 设置连接字符串环境变量（示例）：
+
+   ```bash
+   export DB_DSN="user:password@tcp(127.0.0.1:3306)/famoney?parseTime=true"
+   ```
+
 ## Running locally
 
 ```bash
@@ -29,7 +73,9 @@ go build
    go build
    ```
 
-2. **创建 systemd 服务** `/etc/systemd/system/famoney.service`
+2. **准备 MySQL 数据库**，参见上文 `Database setup`，并在运行环境中设置 `DB_DSN`。
+
+3. **创建 systemd 服务** `/etc/systemd/system/famoney.service`
 
    ```ini
    [Unit]
@@ -52,7 +98,7 @@ go build
    sudo systemctl enable --now famoney
    ```
 
-3. **配置 Nginx** `/etc/nginx/sites-available/famoney.conf`
+4. **配置 Nginx** `/etc/nginx/sites-available/famoney.conf`
 
    ```nginx
    server {
