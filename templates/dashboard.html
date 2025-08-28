@@ -1,0 +1,27 @@
+{{define "content"}}
+<h2>{{T "Dashboard"}}</h2>
+<h3>{{T "CreateWallet"}}</h3>
+<form method="POST" action="/famoney/wallet/create" class="form-inline">
+  <input name="name" placeholder="{{T "WalletName"}}">
+  <input name="currency" placeholder="{{T "Currency"}}" value="USD">
+  <button type="submit">{{T "Add"}}</button>
+</form>
+
+<h3>{{T "AddCategory"}}</h3>
+<form method="POST" action="/famoney/category/add" class="form-inline">
+  <input name="name" placeholder="{{T "Category"}}">
+  <button type="submit">{{T "Add"}}</button>
+</form>
+
+<div class="wallets">
+{{range .Wallets}}
+  <div class="wallet">
+    <h4>{{.Name}} ({{.Currency}})</h4>
+    <p>{{T "Balance"}}: {{.Balance}} {{.Currency}} (~{{printf "%.2f" (Convert .Balance .Currency "USD")}} USD)</p>
+    <a href="/famoney/wallet/{{.ID}}">{{T "Add"}}</a>
+  </div>
+{{else}}
+  <p>No wallets</p>
+{{end}}
+</div>
+{{end}}
