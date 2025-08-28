@@ -1,9 +1,15 @@
 {{define "content"}}
 <h2>{{T "Login"}}</h2>
-<form method="POST" action="/famoney/login">
-  <label>{{T "Username"}}: <input type="text" name="username"></label><br>
-  <label>{{T "Password"}}: <input type="password" name="password"></label><br>
-  <button type="submit">{{T "Submit"}}</button>
+<form method="POST" action="/famoney/login" class="w-50">
+  <div class="mb-3">
+    <label class="form-label">{{T "Username"}}</label>
+    <input type="text" name="username" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">{{T "Password"}}</label>
+    <input type="password" name="password" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary">{{T "Submit"}}</button>
 </form>
 <p><a href="/famoney/register">{{T "Register"}}</a></p>
 {{end}}
