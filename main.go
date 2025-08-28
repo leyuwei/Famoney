@@ -135,8 +135,8 @@ func main() {
 	mux.HandleFunc("/famoney/category/add", auth(addCategoryHandler))
 	mux.Handle("/famoney/static/", http.StripPrefix("/famoney/static/", http.FileServer(http.Dir("static"))))
 
-	log.Println("Server running on :8080")
-	http.ListenAndServe(":8080", mux)
+	log.Println("Server running on :8295")
+	http.ListenAndServe(":8295", mux)
 }
 
 func auth(next http.HandlerFunc) http.HandlerFunc {

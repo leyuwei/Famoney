@@ -17,7 +17,7 @@ go build
 ./famoney
 ```
 
-访问 <http://localhost:8080/famoney/> 查看页面。
+访问 <http://localhost:8295/famoney/> 查看页面。
 
 ## 部署指南 (Ubuntu + Nginx)
 
@@ -60,7 +60,7 @@ go build
        server_name example.com;
 
        location /famoney/ {
-           proxy_pass http://127.0.0.1:8080;
+           proxy_pass http://127.0.0.1:8295;
            proxy_set_header Host $host;
        }
    }
