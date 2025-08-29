@@ -54,14 +54,18 @@ var db *sql.DB
 var currencyRates = map[string]float64{}
 
 func updateCurrencyRates() {
-	resp, err := http.Get("https://api.exchangerate.host/latest?base=USD")
+	exrate_api := os.Getenv("EXRATE_API")
+	if exrate_api == "" {
+		log.Fatal("EXRATE_API must be set")
+	}
+	resp, err := http.Get("https://v6.exchangerate-api.com/v6/" + exrate_api + "/latest/USD")
 	if err != nil {
 		log.Println("failed to fetch currency rates", err)
 		return
 	}
 	defer resp.Body.Close()
 	var data struct {
-		Rates map[string]float64 `json:"rates"`
+		Rates map[string]float64 `json:"conversion_rates"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		log.Println("failed to decode currency rates", err)
