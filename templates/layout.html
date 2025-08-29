@@ -16,6 +16,13 @@
         <li class="nav-item"><a class="nav-link" href="/famoney/dashboard">{{T "Dashboard"}}</a></li>
         <li class="nav-item"><a class="nav-link" href="/famoney/logout">{{T "Logout"}}</a></li>
       </ul>
+      <form method="get" class="d-flex me-3">
+        <select name="base" class="form-select form-select-sm" onchange="this.form.submit()">
+          {{range .Currencies}}
+            <option value="{{.}}" {{if eq $.BaseCurrency .}}selected{{end}}>{{.}}</option>
+          {{end}}
+        </select>
+      </form>
       <span class="navbar-text">
         <a href="?lang=zh" class="text-white me-2">中文</a> | <a href="?lang=en" class="text-white ms-2">EN</a>
       </span>

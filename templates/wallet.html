@@ -4,8 +4,9 @@
 <p>{{T "Balance"}}: {{$bal}} {{$cur}}</p>
 {{end}}
 
-<h3>{{T "Add"}} {{T "Amount"}}</h3>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
+<details class="mb-4">
+<summary>{{T "Add"}} {{T "Amount"}}</summary>
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mt-2">
   <input type="hidden" name="action" value="flow">
   <div class="row g-2">
     <div class="col-md-2"><input class="form-control" name="amount" placeholder="{{T "Amount"}}"></div>
@@ -27,9 +28,11 @@
     <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
   </div>
 </form>
+</details>
 
-<h3>{{T "UpdateBalance"}}</h3>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
+<details class="mb-4">
+<summary>{{T "UpdateBalance"}}</summary>
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mt-2">
   <input type="hidden" name="action" value="balance">
   <div class="row g-2">
     <div class="col-md-2"><input class="form-control" name="amount" placeholder="{{T "Balance"}}"></div>
@@ -51,24 +54,32 @@
     <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
   </div>
 </form>
+</details>
 
-<h3>Share Wallet</h3>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
+<details class="mb-4">
+<summary>{{T "ShareWallet"}}</summary>
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mt-2">
   <input type="hidden" name="action" value="share">
   <div class="row g-2">
-    <div class="col-md-6"><input class="form-control" name="username" placeholder="Username"></div>
+    <div class="col-md-6"><input class="form-control" name="username" list="userlist" placeholder="{{T "Username"}}"></div>
+    <datalist id="userlist">
+      {{range .Users}}<option value="{{.}}">{{.}}</option>{{end}}
+    </datalist>
     <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
   </div>
 </form>
+</details>
 
-<h3>Edit Wallet</h3>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
+<details class="mb-4">
+<summary>{{T "EditWallet"}}</summary>
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mt-2">
   <input type="hidden" name="action" value="rename">
   <div class="row g-2">
     <div class="col-md-6"><input class="form-control" name="name" value="{{.Wallet.Name}}"></div>
     <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
   </div>
 </form>
+</details>
 
 <h3>Flows</h3>
 <table class="table table-striped">

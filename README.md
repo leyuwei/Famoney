@@ -4,11 +4,11 @@ Family Finance Management Website built with Go and HTML templates.
 
 ## Features
 
-- 用户账户系统（中英双语切换）
-- 支持创建个人或共享钱包并记录收支流水
+- 用户账户系统（中英双语切换，默认中文）
+- 支持创建个人或共享钱包并记录收支流水，可选择基准货币
 - 钱包余额可按类别分类，并支持手动调整余额时自动生成记录
-- 支持多币种及简单汇率换算
-- HTML 前端使用简洁卡片式布局
+- 支持多币种及汇率换算，允许负余额以便家庭活动等场景
+- HTML 前端使用可折叠表单以保持界面整洁
 
 ## Database setup (MySQL)
 
@@ -18,41 +18,57 @@ Family Finance Management Website built with Go and HTML templates.
    CREATE DATABASE famoney CHARACTER SET utf8mb4;
    USE famoney;
    CREATE TABLE users (
-       id INT AUTO_INCREMENT PRIMARY KEY,
-       username VARCHAR(50) UNIQUE,
-       password VARCHAR(100)
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     username VARCHAR(255) UNIQUE,
+     password VARCHAR(255)
    );
    CREATE TABLE wallets (
-       id INT AUTO_INCREMENT PRIMARY KEY,
-       name VARCHAR(100),
-       currency VARCHAR(10),
-       balance DOUBLE
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     name VARCHAR(255)
+   );
+   CREATE TABLE wallet_balances (
+     wallet_id INT,
+     currency VARCHAR(3),
+     balance DOUBLE,
+     PRIMARY KEY (wallet_id, currency),
+     FOREIGN KEY (wallet_id) REFERENCES wallets(id)
    );
    CREATE TABLE wallet_owners (
-       wallet_id INT,
-       user_id INT,
-       PRIMARY KEY(wallet_id, user_id)
+     wallet_id INT,
+     user_id INT,
+     PRIMARY KEY (wallet_id, user_id),
+     FOREIGN KEY (wallet_id) REFERENCES wallets(id),
+     FOREIGN KEY (user_id) REFERENCES users(id)
    );
    CREATE TABLE categories (
-       id INT AUTO_INCREMENT PRIMARY KEY,
-       name VARCHAR(50) UNIQUE
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     name VARCHAR(255) UNIQUE
    );
    CREATE TABLE flows (
-       id INT AUTO_INCREMENT PRIMARY KEY,
-       wallet_id INT,
-       amount DOUBLE,
-       currency VARCHAR(10),
-       category_id INT,
-       description TEXT,
-       created_at DATETIME
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     wallet_id INT,
+     amount DOUBLE,
+     currency VARCHAR(3),
+     category_id INT,
+     description TEXT,
+     created_at DATETIME,
+     FOREIGN KEY (wallet_id) REFERENCES wallets(id),
+     FOREIGN KEY (category_id) REFERENCES categories(id)
    );
    ```
 
-2. 设置连接字符串环境变量（示例）：
+2. 运行环境变量写入 `/etc/default/famoney` 并设置权限：
 
    ```bash
-   export DB_DSN="user:password@tcp(127.0.0.1:3306)/famoney?parseTime=true"
+   sudo tee /etc/default/famoney >/dev/null <<'EOF'
+DB_USER=your_db_user_here
+DB_PASSWORD=your_db_password_here
+EXRATE_API=your_api_value_here
+EOF
+   sudo chmod 600 /etc/default/famoney
    ```
+
+   systemd 服务应包含 `EnvironmentFile=/etc/default/famoney`。
 
 ## Running locally
 
@@ -73,9 +89,7 @@ go build
    go build
    ```
 
-2. **准备 MySQL 数据库**，参见上文 `Database setup`，并在运行环境中设置 `DB_DSN`。
-
-3. **创建 systemd 服务** `/etc/systemd/system/famoney.service`
+2. **创建 systemd 服务** `/etc/systemd/system/famoney.service`
 
    ```ini
    [Unit]
@@ -85,6 +99,7 @@ go build
    [Service]
    ExecStart=/usr/local/bin/famoney
    WorkingDirectory=/var/www/Famoney
+   EnvironmentFile=/etc/default/famoney
    Restart=always
 
    [Install]
@@ -98,7 +113,7 @@ go build
    sudo systemctl enable --now famoney
    ```
 
-4. **配置 Nginx** `/etc/nginx/sites-available/famoney.conf`
+3. **配置 Nginx** `/etc/nginx/sites-available/famoney.conf`
 
    ```nginx
    server {

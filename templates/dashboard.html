@@ -1,8 +1,9 @@
 {{define "content"}}
 <h2>{{T "Dashboard"}}</h2>
 
-<h3>{{T "CreateWallet"}}</h3>
-<form method="POST" action="/famoney/wallet/create" class="row g-2 mb-4">
+<details class="mb-4">
+<summary>{{T "CreateWallet"}}</summary>
+<form method="POST" action="/famoney/wallet/create" class="row g-2 mt-2">
   <div class="col-md-4"><input class="form-control" name="name" placeholder="{{T "WalletName"}}"></div>
   <div class="col-md-4">
     <select class="form-select" name="currency">
@@ -13,14 +14,19 @@
   </div>
   <div class="col-md-2"><button type="submit" class="btn btn-success w-100">{{T "Add"}}</button></div>
 </form>
+</details>
 
-<h3>{{T "AddCategory"}}</h3>
-<form method="POST" action="/famoney/category/add" class="row g-2 mb-4">
+<details class="mb-4">
+<summary>{{T "AddCategory"}}</summary>
+<form method="POST" action="/famoney/category/add" class="row g-2 mt-2">
   <div class="col-md-6"><input class="form-control" name="name" placeholder="{{T "Category"}}"></div>
   <div class="col-md-2"><button type="submit" class="btn btn-success w-100">{{T "Add"}}</button></div>
 </form>
+</details>
 
-<ul class="list-unstyled">
+<details class="mb-4">
+<summary>{{T "EditCategories"}}</summary>
+<ul class="list-unstyled mt-2">
 {{range .Categories}}
   <li>
     <form method="POST" action="/famoney/category/update" class="row g-2 mb-2">
@@ -31,6 +37,7 @@
   </li>
 {{end}}
 </ul>
+</details>
 
 <div class="row">
 {{range .Wallets}}
@@ -39,7 +46,7 @@
       <div class="card-body">
         <h4 class="card-title">{{.Name}}</h4>
         {{range $cur, $bal := .Balances}}
-        <p class="card-text">{{T "Balance"}}: {{$bal}} {{$cur}} (~{{printf "%.2f" (Convert $bal $cur "USD")}} USD)</p>
+        <p class="card-text">{{T "Balance"}}: {{$bal}} {{$cur}} (~{{printf "%.2f" (Convert $bal $cur $.BaseCurrency)}} {{$.BaseCurrency}})</p>
         {{end}}
         <a href="/famoney/wallet/{{.ID}}" class="btn btn-primary">{{T "Add"}}</a>
       </div>
