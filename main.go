@@ -110,6 +110,27 @@ func filterBalances(b map[string]float64, base string) {
 	}
 }
 
+func formatMoney(amount float64) string {
+	sign := ""
+	if amount < 0 {
+		sign = "-"
+		amount = -amount
+	}
+	s := fmt.Sprintf("%.2f", amount)
+	parts := strings.Split(s, ".")
+	intPart := parts[0]
+	fracPart := parts[1]
+	n := len(intPart)
+	var b strings.Builder
+	for i, r := range intPart {
+		if i != 0 && (n-i)%3 == 0 {
+			b.WriteByte(',')
+		}
+		b.WriteRune(r)
+	}
+	return sign + b.String() + "." + fracPart
+}
+
 var translations = map[string]map[string]string{
 	"en": {
 		"Login":          "Login",
@@ -316,8 +337,9 @@ func render(w http.ResponseWriter, r *http.Request, tmpl string, data map[string
 	lang := getLang(w, r)
 	base := getBaseCurrency(w, r)
 	funcs := template.FuncMap{
-		"T":       func(key string) string { return T(lang, key) },
-		"Convert": convert,
+		"T":           func(key string) string { return T(lang, key) },
+		"Convert":     convert,
+		"FormatMoney": formatMoney,
 	}
 	data["Lang"] = lang
 	data["BaseCurrency"] = base
