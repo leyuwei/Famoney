@@ -135,8 +135,29 @@
       </div>
       <div class="modal-body">
         <input type="hidden" name="action" value="share">
-        <div class="mb-3"><input class="form-control" name="username" list="userlist" placeholder="{{T "Username"}}"></div>
-        <datalist id="userlist">{{range .Users}}<option value="{{.}}">{{.}}</option>{{end}}</datalist>
+        <div class="mb-3">
+          <label class="form-label">{{T "AllUsers"}}</label>
+          <select class="form-select" name="username">
+            {{range .Users}}<option value="{{.}}">{{.}}</option>{{end}}
+          </select>
+        </div>
+        <div>
+          <h6>{{T "SharedUsers"}}</h6>
+          <ul class="list-group">
+            {{range .Owners}}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              {{.}}
+              {{if ne . $.CurrentUser}}
+              <form method="POST" action="/famoney/wallet/{{$.Wallet.ID}}" class="ms-2">
+                <input type="hidden" name="action" value="unshare">
+                <input type="hidden" name="username" value="{{.}}">
+                <button type="submit" class="btn btn-sm btn-danger">{{T "Unshare"}}</button>
+              </form>
+              {{end}}
+            </li>
+            {{end}}
+          </ul>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>

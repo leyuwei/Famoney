@@ -140,6 +140,9 @@ var translations = map[string]map[string]string{
 		"ByCurrency":     "By Currency",
 		"ByCategory":     "By Category",
 		"Close":          "Close",
+		"AllUsers":       "All Users",
+		"SharedUsers":    "Shared Users",
+		"Unshare":        "Cancel Share",
 	},
 	"zh": {
 		"Login":          "登录",
@@ -181,6 +184,9 @@ var translations = map[string]map[string]string{
 		"ByCurrency":     "按货币",
 		"ByCategory":     "按类别",
 		"Close":          "关闭",
+		"AllUsers":       "系统用户",
+		"SharedUsers":    "已分享用户",
+		"Unshare":        "取消分享",
 	},
 }
 
@@ -538,6 +544,12 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 				db.QueryRow("SELECT IFNULL(MAX(display_order), 0) + 1 FROM wallet_owners WHERE user_id=?", uid2).Scan(&order)
 				db.Exec("INSERT IGNORE INTO wallet_owners (wallet_id, user_id, display_order) VALUES (?, ?, ?)", wallet.ID, uid2, order)
 			}
+		case "unshare":
+			username := r.FormValue("username")
+			var uid2 int
+			if err := db.QueryRow("SELECT id FROM users WHERE username=?", username).Scan(&uid2); err == nil {
+				db.Exec("DELETE FROM wallet_owners WHERE wallet_id=? AND user_id=?", wallet.ID, uid2)
+			}
 		case "rename":
 			name := r.FormValue("name")
 			color := r.FormValue("color")
@@ -596,12 +608,25 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	ownerRows, _ := db.Query("SELECT u.username FROM users u JOIN wallet_owners o ON u.id=o.user_id WHERE o.wallet_id=?", wallet.ID)
+	owners := []string{}
+	for ownerRows.Next() {
+		var u string
+		if err := ownerRows.Scan(&u); err == nil {
+			owners = append(owners, u)
+		}
+	}
+	var currentUser string
+	db.QueryRow("SELECT username FROM users WHERE id=?", uid).Scan(&currentUser)
+
 	data := map[string]interface{}{
-		"Wallet":     wallet,
-		"Flows":      walletFlows,
-		"Categories": categories,
-		"Currencies": currencyList(),
-		"Users":      users,
+		"Wallet":      wallet,
+		"Flows":       walletFlows,
+		"Categories":  categories,
+		"Currencies":  currencyList(),
+		"Users":       users,
+		"Owners":      owners,
+		"CurrentUser": currentUser,
 	}
 	render(w, r, "wallet.html", data)
 }
