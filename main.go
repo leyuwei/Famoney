@@ -95,8 +95,8 @@ func convert(amount float64, from, to string) float64 {
 	if !okFrom || !okTo {
 		return amount
 	}
-	usd := amount * rateFrom
-	return usd / rateTo
+	usd := amount / rateFrom
+	return usd * rateTo
 }
 
 func filterBalances(b map[string]float64, base string) {
