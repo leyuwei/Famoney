@@ -133,6 +133,8 @@ var translations = map[string]map[string]string{
 		"ShareWallet":    "Share Wallet",
 		"EditWallet":     "Edit Wallet",
 		"EditCategories": "Edit Categories",
+		"ViewCategories": "View Categories",
+		"CategoryInUse":  "Category has money and cannot be deleted",
 		"Summary":        "Summary",
 		"TotalBalance":   "Total Balance",
 		"ByCurrency":     "By Currency",
@@ -172,6 +174,8 @@ var translations = map[string]map[string]string{
 		"ShareWallet":    "分享钱包",
 		"EditWallet":     "编辑钱包",
 		"EditCategories": "编辑类别",
+		"ViewCategories": "查看类别",
+		"CategoryInUse":  "该类别在某些钱包有资金，不能删除",
 		"Summary":        "汇总",
 		"TotalBalance":   "总余额",
 		"ByCurrency":     "按货币",
@@ -250,6 +254,7 @@ func main() {
 	mux.HandleFunc("/famoney/wallet/", auth(viewWalletHandler))
 	mux.HandleFunc("/famoney/category/add", auth(addCategoryHandler))
 	mux.HandleFunc("/famoney/category/update", auth(updateCategoryHandler))
+	mux.HandleFunc("/famoney/category/delete", auth(deleteCategoryHandler))
 	mux.HandleFunc("/famoney/flow/", auth(flowHandler))
 	mux.Handle("/famoney/static/", http.StripPrefix("/famoney/static/", http.FileServer(http.Dir("static"))))
 
@@ -417,6 +422,9 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 		"Currencies":     currencyList(),
 		"CurrencyTotals": currencyTotals,
 		"CategoryTotals": categoryTotals,
+	}
+	if r.URL.Query().Get("err") == "category_in_use" {
+		data["CategoryInUse"] = true
 	}
 	render(w, r, "dashboard.html", data)
 }
@@ -675,6 +683,21 @@ func updateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	if idStr != "" && name != "" {
 		id, _ := strconv.Atoi(idStr)
 		db.Exec("UPDATE categories SET name=? WHERE id=?", name, id)
+	}
+	http.Redirect(w, r, "/famoney/dashboard", http.StatusSeeOther)
+}
+
+func deleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.FormValue("id")
+	if idStr != "" {
+		id, _ := strconv.Atoi(idStr)
+		var count int
+		db.QueryRow("SELECT COUNT(*) FROM flows WHERE category_id=?", id).Scan(&count)
+		if count > 0 {
+			http.Redirect(w, r, "/famoney/dashboard?err=category_in_use", http.StatusSeeOther)
+			return
+		}
+		db.Exec("DELETE FROM categories WHERE id=?", id)
 	}
 	http.Redirect(w, r, "/famoney/dashboard", http.StatusSeeOther)
 }
