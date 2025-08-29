@@ -4,15 +4,17 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
+	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 // Data models
@@ -26,8 +28,7 @@ type User struct {
 type Wallet struct {
 	ID               int
 	Name             string
-	Currency         string
-	Balance          float64
+	Balances         map[string]float64
 	Owners           []int
 	CategoryBalances map[int]float64
 }
@@ -49,10 +50,33 @@ type Flow struct {
 
 var db *sql.DB
 
-var currencyRates = map[string]float64{
-	"USD": 1,
-	"CNY": 0.14,
-	"EUR": 1.1,
+var currencyRates = map[string]float64{}
+
+func updateCurrencyRates() {
+	resp, err := http.Get("https://api.exchangerate.host/latest?base=USD")
+	if err != nil {
+		log.Println("failed to fetch currency rates", err)
+		return
+	}
+	defer resp.Body.Close()
+	var data struct {
+		Rates map[string]float64 `json:"rates"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		log.Println("failed to decode currency rates", err)
+		return
+	}
+	currencyRates = data.Rates
+	currencyRates["USD"] = 1
+}
+
+func currencyList() []string {
+	codes := make([]string, 0, len(currencyRates))
+	for k := range currencyRates {
+		codes = append(codes, k)
+	}
+	sort.Strings(codes)
+	return codes
 }
 
 func convert(amount float64, from, to string) float64 {
@@ -133,6 +157,13 @@ func initDB() {
 
 func main() {
 	initDB()
+	updateCurrencyRates()
+	go func() {
+		for {
+			time.Sleep(12 * time.Hour)
+			updateCurrencyRates()
+		}
+	}()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/famoney/", loginHandler)
 	mux.HandleFunc("/famoney/login", loginHandler)
@@ -142,6 +173,7 @@ func main() {
 	mux.HandleFunc("/famoney/wallet/create", auth(createWalletHandler))
 	mux.HandleFunc("/famoney/wallet/", auth(viewWalletHandler))
 	mux.HandleFunc("/famoney/category/add", auth(addCategoryHandler))
+	mux.HandleFunc("/famoney/category/update", auth(updateCategoryHandler))
 	mux.Handle("/famoney/static/", http.StripPrefix("/famoney/static/", http.FileServer(http.Dir("static"))))
 
 	log.Println("Server running on :8295")
@@ -238,7 +270,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("session_id")
 	uid := sessionsStore[cookie.Value]
 
-	rows, err := db.Query("SELECT w.id, w.name, w.currency, w.balance FROM wallets w JOIN wallet_owners o ON w.id=o.wallet_id WHERE o.user_id=?", uid)
+	rows, err := db.Query("SELECT w.id, w.name FROM wallets w JOIN wallet_owners o ON w.id=o.wallet_id WHERE o.user_id=?", uid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -246,24 +278,32 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	userWallets := []*Wallet{}
 	for rows.Next() {
-		w := &Wallet{}
-		if err := rows.Scan(&w.ID, &w.Name, &w.Currency, &w.Balance); err == nil {
+		w := &Wallet{Balances: map[string]float64{}}
+		if err := rows.Scan(&w.ID, &w.Name); err == nil {
+			balRows, _ := db.Query("SELECT currency, balance FROM wallet_balances WHERE wallet_id=?", w.ID)
+			for balRows.Next() {
+				var cur string
+				var bal float64
+				if err := balRows.Scan(&cur, &bal); err == nil {
+					w.Balances[cur] = bal
+				}
+			}
 			userWallets = append(userWallets, w)
 		}
 	}
 
 	catRows, _ := db.Query("SELECT id, name FROM categories")
-	categories := map[int]*Category{}
+	categories := []*Category{}
 	for catRows.Next() {
 		c := &Category{}
 		if err := catRows.Scan(&c.ID, &c.Name); err == nil {
-			categories[c.ID] = c
+			categories = append(categories, c)
 		}
 	}
 	data := map[string]interface{}{
 		"Wallets":    userWallets,
 		"Categories": categories,
-		"Rates":      currencyRates,
+		"Currencies": currencyList(),
 	}
 	render(w, r, "dashboard.html", data)
 }
@@ -273,10 +313,11 @@ func createWalletHandler(w http.ResponseWriter, r *http.Request) {
 	uid := sessionsStore[cookie.Value]
 	name := r.FormValue("name")
 	currency := r.FormValue("currency")
-	res, err := db.Exec("INSERT INTO wallets (name, currency, balance) VALUES (?, ?, 0)", name, currency)
+	res, err := db.Exec("INSERT INTO wallets (name) VALUES (?)", name)
 	if err == nil {
 		wid, _ := res.LastInsertId()
 		db.Exec("INSERT INTO wallet_owners (wallet_id, user_id) VALUES (?, ?)", wid, uid)
+		db.Exec("INSERT INTO wallet_balances (wallet_id, currency, balance) VALUES (?, ?, 0)", wid, currency)
 	}
 	http.Redirect(w, r, "/famoney/dashboard", http.StatusSeeOther)
 }
@@ -295,36 +336,71 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wallet := &Wallet{}
-	err := db.QueryRow("SELECT id, name, currency, balance FROM wallets WHERE id=?", id).Scan(&wallet.ID, &wallet.Name, &wallet.Currency, &wallet.Balance)
+	wallet := &Wallet{Balances: map[string]float64{}}
+	err := db.QueryRow("SELECT id, name FROM wallets WHERE id=?", id).Scan(&wallet.ID, &wallet.Name)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
+	balRows, _ := db.Query("SELECT currency, balance FROM wallet_balances WHERE wallet_id=?", wallet.ID)
+	for balRows.Next() {
+		var cur string
+		var bal float64
+		if err := balRows.Scan(&cur, &bal); err == nil {
+			wallet.Balances[cur] = bal
+		}
+	}
 
 	if r.Method == "POST" {
 		action := r.FormValue("action")
-		amount, _ := strconv.ParseFloat(r.FormValue("amount"), 64)
-		categoryID, _ := strconv.Atoi(r.FormValue("category"))
-		desc := r.FormValue("description")
-		if action == "flow" {
-			db.Exec("UPDATE wallets SET balance = balance + ? WHERE id=?", amount, wallet.ID)
-			db.Exec("INSERT INTO flows (wallet_id, amount, currency, category_id, description, created_at) VALUES (?, ?, ?, ?, ?, ?)", wallet.ID, amount, wallet.Currency, categoryID, desc, time.Now())
-		} else if action == "balance" {
-			diff := amount - wallet.Balance
-			db.Exec("UPDATE wallets SET balance = ? WHERE id=?", amount, wallet.ID)
-			db.Exec("INSERT INTO flows (wallet_id, amount, currency, category_id, description, created_at) VALUES (?, ?, ?, ?, ?, ?)", wallet.ID, diff, wallet.Currency, categoryID, desc, time.Now())
+		switch action {
+		case "flow":
+			amount, _ := strconv.ParseFloat(r.FormValue("amount"), 64)
+			categoryID, _ := strconv.Atoi(r.FormValue("category"))
+			desc := r.FormValue("description")
+			cur := r.FormValue("currency")
+			db.Exec("INSERT INTO wallet_balances (wallet_id, currency, balance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE balance=balance+VALUES(balance)", wallet.ID, cur, amount)
+			db.Exec("INSERT INTO flows (wallet_id, amount, currency, category_id, description, created_at) VALUES (?, ?, ?, ?, ?, ?)", wallet.ID, amount, cur, categoryID, desc, time.Now())
+		case "balance":
+			amount, _ := strconv.ParseFloat(r.FormValue("amount"), 64)
+			categoryID, _ := strconv.Atoi(r.FormValue("category"))
+			desc := r.FormValue("description")
+			cur := r.FormValue("currency")
+			var old float64
+			db.QueryRow("SELECT balance FROM wallet_balances WHERE wallet_id=? AND currency=?", wallet.ID, cur).Scan(&old)
+			diff := amount - old
+			db.Exec("INSERT INTO wallet_balances (wallet_id, currency, balance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE balance=VALUES(balance)", wallet.ID, cur, amount)
+			db.Exec("INSERT INTO flows (wallet_id, amount, currency, category_id, description, created_at) VALUES (?, ?, ?, ?, ?, ?)", wallet.ID, diff, cur, categoryID, desc, time.Now())
+		case "share":
+			username := r.FormValue("username")
+			var uid2 int
+			if err := db.QueryRow("SELECT id FROM users WHERE username=?", username).Scan(&uid2); err == nil {
+				db.Exec("INSERT IGNORE INTO wallet_owners (wallet_id, user_id) VALUES (?, ?)", wallet.ID, uid2)
+			}
+		case "rename":
+			name := r.FormValue("name")
+			db.Exec("UPDATE wallets SET name=? WHERE id=?", name, wallet.ID)
+			wallet.Name = name
 		}
-		db.QueryRow("SELECT balance FROM wallets WHERE id=?", wallet.ID).Scan(&wallet.Balance)
+		balRows, _ := db.Query("SELECT currency, balance FROM wallet_balances WHERE wallet_id=?", wallet.ID)
+		wallet.Balances = map[string]float64{}
+		for balRows.Next() {
+			var cur string
+			var bal float64
+			if err := balRows.Scan(&cur, &bal); err == nil {
+				wallet.Balances[cur] = bal
+			}
+		}
 	}
 
 	wallet.CategoryBalances = map[int]float64{}
-	balRows, _ := db.Query("SELECT category_id, SUM(amount) FROM flows WHERE wallet_id=? GROUP BY category_id", wallet.ID)
-	for balRows.Next() {
+	balRows2, _ := db.Query("SELECT category_id, SUM(amount), currency FROM flows WHERE wallet_id=? GROUP BY category_id, currency", wallet.ID)
+	for balRows2.Next() {
 		var cid int
 		var sum float64
-		if err := balRows.Scan(&cid, &sum); err == nil {
-			wallet.CategoryBalances[cid] = sum
+		var cur string
+		if err := balRows2.Scan(&cid, &sum, &cur); err == nil {
+			wallet.CategoryBalances[cid] += convert(sum, cur, "USD")
 		}
 	}
 
@@ -350,6 +426,7 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 		"Wallet":     wallet,
 		"Flows":      walletFlows,
 		"Categories": categories,
+		"Currencies": currencyList(),
 	}
 	render(w, r, "wallet.html", data)
 }
@@ -358,6 +435,16 @@ func addCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
 	if name != "" {
 		db.Exec("INSERT INTO categories (name) VALUES (?) ON DUPLICATE KEY UPDATE name=name", name)
+	}
+	http.Redirect(w, r, "/famoney/dashboard", http.StatusSeeOther)
+}
+
+func updateCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.FormValue("id")
+	name := r.FormValue("name")
+	if idStr != "" && name != "" {
+		id, _ := strconv.Atoi(idStr)
+		db.Exec("UPDATE categories SET name=? WHERE id=?", name, id)
 	}
 	http.Redirect(w, r, "/famoney/dashboard", http.StatusSeeOther)
 }
