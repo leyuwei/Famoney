@@ -26,8 +26,7 @@
 
 <div class="mb-3">
   <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#createWalletModal">{{T "CreateWallet"}}</button>
-  <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">{{T "AddCategory"}}</button>
-  <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editCategoriesModal">{{T "EditCategories"}}</button>
+  <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#viewCategoriesModal">{{T "ViewCategories"}}</button>
 </div>
 
 <div class="row" id="walletList">
@@ -73,45 +72,35 @@
   </div>
 </div>
 
-<div class="modal fade" id="addCategoryModal" tabindex="-1">
-  <div class="modal-dialog">
-    <form method="POST" action="/famoney/category/add" class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">{{T "AddCategory"}}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3"><input class="form-control" name="name" placeholder="{{T "Category"}}"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
-        <button type="submit" class="btn btn-success">{{T "Add"}}</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div class="modal fade" id="editCategoriesModal" tabindex="-1">
+<div class="modal fade" id="viewCategoriesModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">{{T "EditCategories"}}</h5>
+        <h5 class="modal-title">{{T "ViewCategories"}}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
       </div>
       <div class="modal-body">
+        {{if .CategoryInUse}}
+        <div class="alert alert-warning">{{T "CategoryInUse"}}</div>
+        {{end}}
+        <form method="POST" action="/famoney/category/add" class="input-group mb-3">
+          <input class="form-control" name="name" placeholder="{{T "Category"}}">
+          <button class="btn btn-success" type="submit">{{T "Add"}}</button>
+        </form>
         {{range .Categories}}
         <form method="POST" action="/famoney/category/update" class="input-group mb-2">
           <input type="hidden" name="id" value="{{.ID}}">
           <input class="form-control" name="name" value="{{.Name}}">
           <button class="btn btn-primary" type="submit">{{T "Edit"}}</button>
+          <button class="btn btn-danger" type="submit" formaction="/famoney/category/delete" onclick="return confirm('{{T "Confirm"}}');">{{T "Delete"}}</button>
         </form>
         {{end}}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
       </div>
-</div>
-</div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -136,5 +125,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+{{if .CategoryInUse}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var m = new bootstrap.Modal(document.getElementById('viewCategoriesModal'));
+  m.show();
+});
+</script>
+{{end}}
 
 {{end}}
