@@ -98,43 +98,60 @@ func convert(amount float64, from, to string) float64 {
 
 var translations = map[string]map[string]string{
 	"en": {
-		"Login":         "Login",
-		"Register":      "Register",
-		"Username":      "Username",
-		"Password":      "Password",
-		"Dashboard":     "Dashboard",
-		"CreateWallet":  "Create Wallet",
-		"WalletName":    "Wallet Name",
-		"Currency":      "Currency",
-		"Balance":       "Balance",
-		"Add":           "Add",
-		"Logout":        "Logout",
-		"Category":      "Category",
-		"Amount":        "Amount",
-		"Description":   "Description",
-		"Submit":        "Submit",
-		"AddCategory":   "Add Category",
-		"UpdateBalance": "Update Balance",
+		"Login":          "Login",
+		"Register":       "Register",
+		"Username":       "Username",
+		"Password":       "Password",
+		"Dashboard":      "Dashboard",
+		"CreateWallet":   "Create Wallet",
+		"WalletName":     "Wallet Name",
+		"Currency":       "Currency",
+		"Balance":        "Balance",
+		"Add":            "Add",
+		"Logout":         "Logout",
+		"Category":       "Category",
+		"Amount":         "Amount",
+		"Description":    "Description",
+		"Submit":         "Submit",
+		"AddCategory":    "Add Category",
+		"UpdateBalance":  "Update Balance",
+		"ShareWallet":    "Share Wallet",
+		"EditWallet":     "Edit Wallet",
+		"EditCategories": "Edit Categories",
 	},
 	"zh": {
-		"Login":         "登录",
-		"Register":      "注册",
-		"Username":      "用户名",
-		"Password":      "密码",
-		"Dashboard":     "仪表盘",
-		"CreateWallet":  "创建钱包",
-		"WalletName":    "钱包名称",
-		"Currency":      "货币",
-		"Balance":       "余额",
-		"Add":           "添加",
-		"Logout":        "退出登录",
-		"Category":      "类别",
-		"Amount":        "金额",
-		"Description":   "描述",
-		"Submit":        "提交",
-		"AddCategory":   "添加类别",
-		"UpdateBalance": "更新余额",
+		"Login":          "登录",
+		"Register":       "注册",
+		"Username":       "用户名",
+		"Password":       "密码",
+		"Dashboard":      "仪表盘",
+		"CreateWallet":   "创建钱包",
+		"WalletName":     "钱包名称",
+		"Currency":       "货币",
+		"Balance":        "余额",
+		"Add":            "添加",
+		"Logout":         "退出登录",
+		"Category":       "类别",
+		"Amount":         "金额",
+		"Description":    "描述",
+		"Submit":         "编辑",
+		"AddCategory":    "添加类别",
+		"UpdateBalance":  "更新余额",
+		"ShareWallet":    "分享钱包",
+		"EditWallet":     "编辑钱包",
+		"EditCategories": "编辑类别",
 	},
+}
+
+func getBaseCurrency(w http.ResponseWriter, r *http.Request) string {
+	if base := r.FormValue("base"); base != "" {
+		http.SetCookie(w, &http.Cookie{Name: "base", Value: base, Path: "/"})
+		return base
+	}
+	if c, err := r.Cookie("base"); err == nil {
+		return c.Value
+	}
+	return "CNY"
 }
 
 var sessionsStore = map[string]int{}
@@ -236,11 +253,16 @@ func T(lang, key string) string {
 
 func render(w http.ResponseWriter, r *http.Request, tmpl string, data map[string]interface{}) {
 	lang := getLang(w, r)
+	base := getBaseCurrency(w, r)
 	funcs := template.FuncMap{
 		"T":       func(key string) string { return T(lang, key) },
 		"Convert": convert,
 	}
 	data["Lang"] = lang
+	data["BaseCurrency"] = base
+	if _, ok := data["Currencies"]; !ok {
+		data["Currencies"] = currencyList()
+	}
 	t, err := template.New("layout.html").Funcs(funcs).ParseFiles(filepath.Join("templates", "layout.html"), filepath.Join("templates", tmpl))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -346,6 +368,7 @@ func createWalletHandler(w http.ResponseWriter, r *http.Request) {
 func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("session_id")
 	uid := sessionsStore[cookie.Value]
+	base := getBaseCurrency(w, r)
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/famoney/wallet/")
 	id, _ := strconv.Atoi(idStr)
@@ -421,7 +444,7 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 		var sum float64
 		var cur string
 		if err := balRows2.Scan(&cid, &sum, &cur); err == nil {
-			wallet.CategoryBalances[cid] += convert(sum, cur, "USD")
+			wallet.CategoryBalances[cid] += convert(sum, cur, base)
 		}
 	}
 
@@ -442,12 +465,21 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 			categories[c.ID] = c
 		}
 	}
+	userRows, _ := db.Query("SELECT username FROM users")
+	users := []string{}
+	for userRows.Next() {
+		var u string
+		if err := userRows.Scan(&u); err == nil {
+			users = append(users, u)
+		}
+	}
 
 	data := map[string]interface{}{
 		"Wallet":     wallet,
 		"Flows":      walletFlows,
 		"Categories": categories,
 		"Currencies": currencyList(),
+		"Users":      users,
 	}
 	render(w, r, "wallet.html", data)
 }
