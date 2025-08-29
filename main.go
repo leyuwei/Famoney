@@ -29,6 +29,7 @@ type User struct {
 type Wallet struct {
 	ID               int
 	Name             string
+	Color            string
 	Balances         map[string]float64
 	Owners           []int
 	CategoryBalances map[int]float64
@@ -109,6 +110,7 @@ var translations = map[string]map[string]string{
 		"WalletName":     "Wallet Name",
 		"Currency":       "Currency",
 		"Balance":        "Balance",
+		"Color":          "Color",
 		"Add":            "Add",
 		"Logout":         "Logout",
 		"Category":       "Category",
@@ -147,6 +149,7 @@ var translations = map[string]map[string]string{
 		"WalletName":     "钱包名称",
 		"Currency":       "货币",
 		"Balance":        "余额",
+		"Color":          "颜色",
 		"Add":            "添加",
 		"Logout":         "退出登录",
 		"Category":       "类别",
@@ -349,7 +352,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	uid := sessionsStore[cookie.Value]
 	base := getBaseCurrency(w, r)
 
-	rows, err := db.Query("SELECT w.id, w.name FROM wallets w JOIN wallet_owners o ON w.id=o.wallet_id WHERE o.user_id=?", uid)
+	rows, err := db.Query("SELECT w.id, w.name, IFNULL(w.color, '#b5651d') FROM wallets w JOIN wallet_owners o ON w.id=o.wallet_id WHERE o.user_id=?", uid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -360,7 +363,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	walletIDs := []int{}
 	for rows.Next() {
 		w := &Wallet{Balances: map[string]float64{}}
-		if err := rows.Scan(&w.ID, &w.Name); err == nil {
+		if err := rows.Scan(&w.ID, &w.Name, &w.Color); err == nil {
 			balRows, _ := db.Query("SELECT currency, balance FROM wallet_balances WHERE wallet_id=?", w.ID)
 			for balRows.Next() {
 				var cur string
@@ -422,7 +425,11 @@ func createWalletHandler(w http.ResponseWriter, r *http.Request) {
 	uid := sessionsStore[cookie.Value]
 	name := r.FormValue("name")
 	currency := r.FormValue("currency")
-	res, err := db.Exec("INSERT INTO wallets (name) VALUES (?)", name)
+	color := r.FormValue("color")
+	if color == "" {
+		color = "#b5651d"
+	}
+	res, err := db.Exec("INSERT INTO wallets (name, color) VALUES (?, ?)", name, color)
 	if err == nil {
 		wid, _ := res.LastInsertId()
 		db.Exec("INSERT INTO wallet_owners (wallet_id, user_id) VALUES (?, ?)", wid, uid)
@@ -462,7 +469,7 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wallet := &Wallet{Balances: map[string]float64{}}
-	err := db.QueryRow("SELECT id, name FROM wallets WHERE id=?", id).Scan(&wallet.ID, &wallet.Name)
+	err := db.QueryRow("SELECT id, name, IFNULL(color, '#b5651d') FROM wallets WHERE id=?", id).Scan(&wallet.ID, &wallet.Name, &wallet.Color)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -504,8 +511,13 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		case "rename":
 			name := r.FormValue("name")
-			db.Exec("UPDATE wallets SET name=? WHERE id=?", name, wallet.ID)
+			color := r.FormValue("color")
+			if color == "" {
+				color = "#b5651d"
+			}
+			db.Exec("UPDATE wallets SET name=?, color=? WHERE id=?", name, color, wallet.ID)
 			wallet.Name = name
+			wallet.Color = color
 		}
 		balRows, _ := db.Query("SELECT currency, balance FROM wallet_balances WHERE wallet_id=?", wallet.ID)
 		wallet.Balances = map[string]float64{}

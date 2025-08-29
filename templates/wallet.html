@@ -1,5 +1,5 @@
 {{define "content"}}
-<div class="wallet-card mb-3">
+<div class="wallet-card mb-3" style="{{if .Wallet.Color}}background: {{.Wallet.Color}};{{end}}">
   <h2>{{.Wallet.Name}}</h2>
   <div class="row balance-cards mb-3">
   {{range $cur, $bal := .Wallet.Balances}}
@@ -156,6 +156,10 @@
       <div class="modal-body">
         <input type="hidden" name="action" value="rename">
         <div class="mb-3"><input class="form-control" name="name" value="{{.Wallet.Name}}"></div>
+        <div class="mb-3">
+          <label class="form-label">{{T "Color"}}</label>
+          <input type="color" class="form-control form-control-color" name="color" value="{{.Wallet.Color}}">
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
