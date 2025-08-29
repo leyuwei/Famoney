@@ -47,6 +47,8 @@ type Flow struct {
 	CategoryID  int
 	Description string
 	CreatedAt   time.Time
+	OperatorID  int
+	Operator    string
 }
 
 var db *sql.DB
@@ -113,6 +115,17 @@ var translations = map[string]map[string]string{
 		"Amount":         "Amount",
 		"Description":    "Description",
 		"Submit":         "Submit",
+		"Confirm":        "Confirm",
+		"Edit":           "Edit",
+		"Delete":         "Delete",
+		"View":           "View",
+		"Share":          "Share",
+		"Time":           "Time",
+		"Flows":          "Flows",
+		"Operator":       "Operator",
+		"NoFlows":        "No flows",
+		"NoWallets":      "No wallets",
+		"Actions":        "Actions",
 		"AddCategory":    "Add Category",
 		"UpdateBalance":  "Update Balance",
 		"ShareWallet":    "Share Wallet",
@@ -134,7 +147,18 @@ var translations = map[string]map[string]string{
 		"Category":       "类别",
 		"Amount":         "金额",
 		"Description":    "描述",
-		"Submit":         "编辑",
+		"Submit":         "提交",
+		"Confirm":        "确认",
+		"Edit":           "编辑",
+		"Delete":         "删除",
+		"View":           "查看",
+		"Share":          "分享",
+		"Time":           "时间",
+		"Flows":          "流水",
+		"Operator":       "操作人",
+		"NoFlows":        "无流水",
+		"NoWallets":      "没有钱包",
+		"Actions":        "操作",
 		"AddCategory":    "添加类别",
 		"UpdateBalance":  "更新余额",
 		"ShareWallet":    "分享钱包",
@@ -212,6 +236,7 @@ func main() {
 	mux.HandleFunc("/famoney/wallet/", auth(viewWalletHandler))
 	mux.HandleFunc("/famoney/category/add", auth(addCategoryHandler))
 	mux.HandleFunc("/famoney/category/update", auth(updateCategoryHandler))
+	mux.HandleFunc("/famoney/flow/", auth(flowHandler))
 	mux.Handle("/famoney/static/", http.StripPrefix("/famoney/static/", http.FileServer(http.Dir("static"))))
 
 	log.Println("Server running on :8295")
@@ -369,9 +394,24 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("session_id")
 	uid := sessionsStore[cookie.Value]
 	base := getBaseCurrency(w, r)
-
-	idStr := strings.TrimPrefix(r.URL.Path, "/famoney/wallet/")
-	id, _ := strconv.Atoi(idStr)
+	path := strings.TrimPrefix(r.URL.Path, "/famoney/wallet/")
+	if strings.HasSuffix(path, "/delete") && r.Method == "POST" {
+		idStr := strings.TrimSuffix(path, "/delete")
+		id, _ := strconv.Atoi(idStr)
+		var count int
+		db.QueryRow("SELECT COUNT(*) FROM wallet_owners WHERE wallet_id=? AND user_id=?", id, uid).Scan(&count)
+		if count == 0 {
+			http.NotFound(w, r)
+			return
+		}
+		db.Exec("DELETE FROM flows WHERE wallet_id=?", id)
+		db.Exec("DELETE FROM wallet_balances WHERE wallet_id=?", id)
+		db.Exec("DELETE FROM wallet_owners WHERE wallet_id=?", id)
+		db.Exec("DELETE FROM wallets WHERE id=?", id)
+		http.Redirect(w, r, "/famoney/dashboard", http.StatusSeeOther)
+		return
+	}
+	id, _ := strconv.Atoi(path)
 
 	var count int
 	db.QueryRow("SELECT COUNT(*) FROM wallet_owners WHERE wallet_id=? AND user_id=?", id, uid).Scan(&count)
@@ -404,7 +444,7 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 			desc := r.FormValue("description")
 			cur := r.FormValue("currency")
 			db.Exec("INSERT INTO wallet_balances (wallet_id, currency, balance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE balance=balance+VALUES(balance)", wallet.ID, cur, amount)
-			db.Exec("INSERT INTO flows (wallet_id, amount, currency, category_id, description, created_at) VALUES (?, ?, ?, ?, ?, ?)", wallet.ID, amount, cur, categoryID, desc, time.Now())
+			db.Exec("INSERT INTO flows (wallet_id, amount, currency, category_id, description, created_at, operator_id) VALUES (?, ?, ?, ?, ?, ?, ?)", wallet.ID, amount, cur, categoryID, desc, time.Now(), uid)
 		case "balance":
 			amount, _ := strconv.ParseFloat(r.FormValue("amount"), 64)
 			categoryID, _ := strconv.Atoi(r.FormValue("category"))
@@ -414,7 +454,7 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 			db.QueryRow("SELECT balance FROM wallet_balances WHERE wallet_id=? AND currency=?", wallet.ID, cur).Scan(&old)
 			diff := amount - old
 			db.Exec("INSERT INTO wallet_balances (wallet_id, currency, balance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE balance=VALUES(balance)", wallet.ID, cur, amount)
-			db.Exec("INSERT INTO flows (wallet_id, amount, currency, category_id, description, created_at) VALUES (?, ?, ?, ?, ?, ?)", wallet.ID, diff, cur, categoryID, desc, time.Now())
+			db.Exec("INSERT INTO flows (wallet_id, amount, currency, category_id, description, created_at, operator_id) VALUES (?, ?, ?, ?, ?, ?, ?)", wallet.ID, diff, cur, categoryID, desc, time.Now(), uid)
 		case "share":
 			username := r.FormValue("username")
 			var uid2 int
@@ -448,11 +488,11 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	flowRows, _ := db.Query("SELECT id, wallet_id, amount, currency, category_id, description, created_at FROM flows WHERE wallet_id=? ORDER BY created_at DESC", wallet.ID)
+	flowRows, _ := db.Query("SELECT f.id, f.wallet_id, f.amount, f.currency, f.category_id, f.description, f.created_at, u.id, u.username FROM flows f LEFT JOIN users u ON f.operator_id=u.id WHERE f.wallet_id=? ORDER BY f.created_at DESC", wallet.ID)
 	walletFlows := []*Flow{}
 	for flowRows.Next() {
 		f := &Flow{}
-		if err := flowRows.Scan(&f.ID, &f.WalletID, &f.Amount, &f.Currency, &f.CategoryID, &f.Description, &f.CreatedAt); err == nil {
+		if err := flowRows.Scan(&f.ID, &f.WalletID, &f.Amount, &f.Currency, &f.CategoryID, &f.Description, &f.CreatedAt, &f.OperatorID, &f.Operator); err == nil {
 			walletFlows = append(walletFlows, f)
 		}
 	}
@@ -482,6 +522,69 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 		"Users":      users,
 	}
 	render(w, r, "wallet.html", data)
+}
+
+func flowHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, _ := r.Cookie("session_id")
+	uid := sessionsStore[cookie.Value]
+	path := strings.TrimPrefix(r.URL.Path, "/famoney/flow/")
+	if strings.HasSuffix(path, "/delete") && r.Method == "POST" {
+		idStr := strings.TrimSuffix(path, "/delete")
+		id, _ := strconv.Atoi(idStr)
+		var wid int
+		var amount float64
+		var cur string
+		db.QueryRow("SELECT wallet_id, amount, currency FROM flows WHERE id=?", id).Scan(&wid, &amount, &cur)
+		var count int
+		db.QueryRow("SELECT COUNT(*) FROM wallet_owners WHERE wallet_id=? AND user_id=?", wid, uid).Scan(&count)
+		if count == 0 {
+			http.NotFound(w, r)
+			return
+		}
+		db.Exec("UPDATE wallet_balances SET balance=balance-? WHERE wallet_id=? AND currency=?", amount, wid, cur)
+		db.Exec("DELETE FROM flows WHERE id=?", id)
+		http.Redirect(w, r, fmt.Sprintf("/famoney/wallet/%d", wid), http.StatusSeeOther)
+		return
+	}
+	if strings.HasSuffix(path, "/edit") {
+		idStr := strings.TrimSuffix(path, "/edit")
+		id, _ := strconv.Atoi(idStr)
+		f := &Flow{}
+		db.QueryRow("SELECT wallet_id, amount, currency, category_id, description FROM flows WHERE id=?", id).Scan(&f.WalletID, &f.Amount, &f.Currency, &f.CategoryID, &f.Description)
+		var count int
+		db.QueryRow("SELECT COUNT(*) FROM wallet_owners WHERE wallet_id=? AND user_id=?", f.WalletID, uid).Scan(&count)
+		if count == 0 {
+			http.NotFound(w, r)
+			return
+		}
+		if r.Method == "POST" {
+			newAmount, _ := strconv.ParseFloat(r.FormValue("amount"), 64)
+			newCurrency := r.FormValue("currency")
+			newCategoryID, _ := strconv.Atoi(r.FormValue("category"))
+			newDesc := r.FormValue("description")
+			db.Exec("UPDATE wallet_balances SET balance=balance-? WHERE wallet_id=? AND currency=?", f.Amount, f.WalletID, f.Currency)
+			db.Exec("INSERT INTO wallet_balances (wallet_id, currency, balance) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE balance=balance+VALUES(balance)", f.WalletID, newCurrency, newAmount)
+			db.Exec("UPDATE flows SET amount=?, currency=?, category_id=?, description=?, operator_id=? WHERE id=?", newAmount, newCurrency, newCategoryID, newDesc, uid, id)
+			http.Redirect(w, r, fmt.Sprintf("/famoney/wallet/%d", f.WalletID), http.StatusSeeOther)
+			return
+		}
+		catRows, _ := db.Query("SELECT id, name FROM categories")
+		categories := []*Category{}
+		for catRows.Next() {
+			c := &Category{}
+			if err := catRows.Scan(&c.ID, &c.Name); err == nil {
+				categories = append(categories, c)
+			}
+		}
+		data := map[string]interface{}{
+			"Flow":       f,
+			"Categories": categories,
+			"Currencies": currencyList(),
+		}
+		render(w, r, "flow_edit.html", data)
+		return
+	}
+	http.NotFound(w, r)
 }
 
 func addCategoryHandler(w http.ResponseWriter, r *http.Request) {
