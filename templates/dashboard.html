@@ -30,9 +30,9 @@
   <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editCategoriesModal">{{T "EditCategories"}}</button>
 </div>
 
-<div class="row">
+<div class="row" id="walletList">
 {{range .Wallets}}
-  <div class="col-md-4 mb-3">
+  <div class="col-md-4 mb-3 wallet-item" data-id="{{.ID}}">
     <div class="wallet-card" style="{{if .Color}}background: {{.Color}};{{end}}">
       <h4 class="card-title">{{.Name}}</h4>
       {{range $cur, $bal := .Balances}}
@@ -110,8 +110,31 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
       </div>
-    </div>
-  </div>
 </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var list = document.getElementById('walletList');
+  if (list) {
+    new Sortable(list, {
+      animation: 150,
+      onEnd: function() {
+        var ids = [];
+        document.querySelectorAll('#walletList .wallet-item').forEach(function(el){
+          ids.push(parseInt(el.dataset.id));
+        });
+        fetch('/famoney/wallet/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({order: ids})
+        });
+      }
+    });
+  }
+});
+</script>
 
 {{end}}

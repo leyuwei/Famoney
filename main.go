@@ -246,6 +246,7 @@ func main() {
 	mux.HandleFunc("/famoney/logout", logoutHandler)
 	mux.HandleFunc("/famoney/dashboard", auth(dashboardHandler))
 	mux.HandleFunc("/famoney/wallet/create", auth(createWalletHandler))
+	mux.HandleFunc("/famoney/wallet/reorder", auth(reorderWalletsHandler))
 	mux.HandleFunc("/famoney/wallet/", auth(viewWalletHandler))
 	mux.HandleFunc("/famoney/category/add", auth(addCategoryHandler))
 	mux.HandleFunc("/famoney/category/update", auth(updateCategoryHandler))
@@ -352,7 +353,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	uid := sessionsStore[cookie.Value]
 	base := getBaseCurrency(w, r)
 
-	rows, err := db.Query("SELECT w.id, w.name, IFNULL(w.color, '#b5651d') FROM wallets w JOIN wallet_owners o ON w.id=o.wallet_id WHERE o.user_id=?", uid)
+	rows, err := db.Query("SELECT w.id, w.name, IFNULL(w.color, '#b5651d') FROM wallets w JOIN wallet_owners o ON w.id=o.wallet_id WHERE o.user_id=? ORDER BY o.display_order, w.id", uid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -432,10 +433,28 @@ func createWalletHandler(w http.ResponseWriter, r *http.Request) {
 	res, err := db.Exec("INSERT INTO wallets (name, color) VALUES (?, ?)", name, color)
 	if err == nil {
 		wid, _ := res.LastInsertId()
-		db.Exec("INSERT INTO wallet_owners (wallet_id, user_id) VALUES (?, ?)", wid, uid)
+		var order int
+		db.QueryRow("SELECT IFNULL(MAX(display_order), 0) + 1 FROM wallet_owners WHERE user_id=?", uid).Scan(&order)
+		db.Exec("INSERT INTO wallet_owners (wallet_id, user_id, display_order) VALUES (?, ?, ?)", wid, uid, order)
 		db.Exec("INSERT INTO wallet_balances (wallet_id, currency, balance) VALUES (?, ?, 0)", wid, currency)
 	}
 	http.Redirect(w, r, "/famoney/dashboard", http.StatusSeeOther)
+}
+
+func reorderWalletsHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, _ := r.Cookie("session_id")
+	uid := sessionsStore[cookie.Value]
+	var payload struct {
+		Order []int `json:"order"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	for i, wid := range payload.Order {
+		db.Exec("UPDATE wallet_owners SET display_order=? WHERE wallet_id=? AND user_id=?", i, wid, uid)
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
@@ -507,7 +526,9 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 			username := r.FormValue("username")
 			var uid2 int
 			if err := db.QueryRow("SELECT id FROM users WHERE username=?", username).Scan(&uid2); err == nil {
-				db.Exec("INSERT IGNORE INTO wallet_owners (wallet_id, user_id) VALUES (?, ?)", wallet.ID, uid2)
+				var order int
+				db.QueryRow("SELECT IFNULL(MAX(display_order), 0) + 1 FROM wallet_owners WHERE user_id=?", uid2).Scan(&order)
+				db.Exec("INSERT IGNORE INTO wallet_owners (wallet_id, user_id, display_order) VALUES (?, ?, ?)", wallet.ID, uid2, order)
 			}
 		case "rename":
 			name := r.FormValue("name")

@@ -21,6 +21,7 @@ CREATE TABLE wallet_balances (
 CREATE TABLE wallet_owners (
   wallet_id INT,
   user_id INT,
+  display_order INT DEFAULT 0,
   PRIMARY KEY (wallet_id, user_id),
   FOREIGN KEY (wallet_id) REFERENCES wallets(id),
   FOREIGN KEY (user_id) REFERENCES users(id)
