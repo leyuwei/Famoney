@@ -131,6 +131,11 @@ var translations = map[string]map[string]string{
 		"ShareWallet":    "Share Wallet",
 		"EditWallet":     "Edit Wallet",
 		"EditCategories": "Edit Categories",
+		"Summary":        "Summary",
+		"TotalBalance":   "Total Balance",
+		"ByCurrency":     "By Currency",
+		"ByCategory":     "By Category",
+		"Close":          "Close",
 	},
 	"zh": {
 		"Login":          "登录",
@@ -164,6 +169,11 @@ var translations = map[string]map[string]string{
 		"ShareWallet":    "分享钱包",
 		"EditWallet":     "编辑钱包",
 		"EditCategories": "编辑类别",
+		"Summary":        "汇总",
+		"TotalBalance":   "总余额",
+		"ByCurrency":     "按货币",
+		"ByCategory":     "按类别",
+		"Close":          "关闭",
 	},
 }
 
@@ -337,6 +347,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("session_id")
 	uid := sessionsStore[cookie.Value]
+	base := getBaseCurrency(w, r)
 
 	rows, err := db.Query("SELECT w.id, w.name FROM wallets w JOIN wallet_owners o ON w.id=o.wallet_id WHERE o.user_id=?", uid)
 	if err != nil {
@@ -345,6 +356,8 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 	userWallets := []*Wallet{}
+	currencyTotals := map[string]float64{}
+	walletIDs := []int{}
 	for rows.Next() {
 		w := &Wallet{Balances: map[string]float64{}}
 		if err := rows.Scan(&w.ID, &w.Name); err == nil {
@@ -354,24 +367,52 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 				var bal float64
 				if err := balRows.Scan(&cur, &bal); err == nil {
 					w.Balances[cur] = bal
+					currencyTotals[cur] += bal
 				}
 			}
 			userWallets = append(userWallets, w)
+			walletIDs = append(walletIDs, w.ID)
 		}
 	}
 
 	catRows, _ := db.Query("SELECT id, name FROM categories")
 	categories := []*Category{}
+	categoriesMap := map[int]*Category{}
 	for catRows.Next() {
 		c := &Category{}
 		if err := catRows.Scan(&c.ID, &c.Name); err == nil {
 			categories = append(categories, c)
+			categoriesMap[c.ID] = c
 		}
 	}
+
+	categoryTotals := map[int]float64{}
+	if len(walletIDs) > 0 {
+		placeholders := make([]string, len(walletIDs))
+		args := make([]interface{}, len(walletIDs))
+		for i, id := range walletIDs {
+			placeholders[i] = "?"
+			args[i] = id
+		}
+		q := fmt.Sprintf("SELECT category_id, SUM(amount), currency FROM flows WHERE wallet_id IN (%s) GROUP BY category_id, currency", strings.Join(placeholders, ","))
+		rows2, _ := db.Query(q, args...)
+		for rows2.Next() {
+			var cid int
+			var sum float64
+			var cur string
+			if err := rows2.Scan(&cid, &sum, &cur); err == nil {
+				categoryTotals[cid] += convert(sum, cur, base)
+			}
+		}
+	}
+
 	data := map[string]interface{}{
-		"Wallets":    userWallets,
-		"Categories": categories,
-		"Currencies": currencyList(),
+		"Wallets":        userWallets,
+		"Categories":     categories,
+		"CategoriesMap":  categoriesMap,
+		"Currencies":     currencyList(),
+		"CurrencyTotals": currencyTotals,
+		"CategoryTotals": categoryTotals,
 	}
 	render(w, r, "dashboard.html", data)
 }

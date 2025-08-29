@@ -1,18 +1,25 @@
 {{define "content"}}
-<h2>{{.Wallet.Name}}</h2>
-
-<h3>{{T "Balance"}}</h3>
-<div class="row balance-cards mb-3">
-{{range $cur, $bal := .Wallet.Balances}}
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <h5 class="card-title">{{$cur}}</h5>
-        <p class="card-text">{{printf "%.2f" $bal}}</p>
+<div class="wallet-card mb-3">
+  <h2>{{.Wallet.Name}}</h2>
+  <div class="row balance-cards mb-3">
+  {{range $cur, $bal := .Wallet.Balances}}
+    <div class="col-md-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <h5 class="card-title">{{$cur}}</h5>
+          <p class="card-text">{{printf "%.2f" $bal}}</p>
+        </div>
       </div>
     </div>
+  {{end}}
   </div>
-{{end}}
+</div>
+
+<div class="mb-3">
+  <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addFlowModal">{{T "Add"}} {{T "Amount"}}</button>
+  <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#updateBalanceModal">{{T "UpdateBalance"}}</button>
+  <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#shareWalletModal">{{T "ShareWallet"}}</button>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editWalletModal">{{T "EditWallet"}}</button>
 </div>
 
 <h3>{{T "Category"}} {{T "Balance"}}</h3>
@@ -27,90 +34,13 @@
   </tbody>
 </table>
 
-<details class="mb-4">
-<summary>{{T "Add"}} {{T "Amount"}}</summary>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mt-2">
-  <input type="hidden" name="action" value="flow">
-  <div class="row g-2">
-    <div class="col-md-2"><input class="form-control" name="amount" placeholder="{{T "Amount"}}"></div>
-    <div class="col-md-2">
-      <select name="currency" class="form-select">
-        {{range $.Currencies}}
-          <option value="{{.}}">{{.}}</option>
-        {{end}}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select name="category" class="form-select">
-        {{range $id, $c := .Categories}}
-          <option value="{{$id}}">{{$c.Name}}</option>
-        {{end}}
-      </select>
-    </div>
-    <div class="col-md-3"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
-    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Add"}}</button></div>
-  </div>
-</form>
-</details>
-
-<details class="mb-4">
-<summary>{{T "UpdateBalance"}}</summary>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mt-2">
-  <input type="hidden" name="action" value="balance">
-  <div class="row g-2">
-    <div class="col-md-2"><input class="form-control" name="amount" placeholder="{{T "Balance"}}"></div>
-    <div class="col-md-2">
-      <select name="currency" class="form-select">
-        {{range $.Currencies}}
-          <option value="{{.}}">{{.}}</option>
-        {{end}}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select name="category" class="form-select">
-        {{range $id, $c := .Categories}}
-          <option value="{{$id}}">{{$c.Name}}</option>
-        {{end}}
-      </select>
-    </div>
-    <div class="col-md-3"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
-    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Confirm"}}</button></div>
-  </div>
-</form>
-</details>
-
-<details class="mb-4">
-<summary>{{T "ShareWallet"}}</summary>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mt-2">
-  <input type="hidden" name="action" value="share">
-  <div class="row g-2">
-    <div class="col-md-6"><input class="form-control" name="username" list="userlist" placeholder="{{T "Username"}}"></div>
-    <datalist id="userlist">
-      {{range .Users}}<option value="{{.}}">{{.}}</option>{{end}}
-    </datalist>
-    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Share"}}</button></div>
-  </div>
-</form>
-</details>
-
-<details class="mb-4">
-<summary>{{T "EditWallet"}}</summary>
-<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mt-2">
-  <input type="hidden" name="action" value="rename">
-  <div class="row g-2">
-    <div class="col-md-6"><input class="form-control" name="name" value="{{.Wallet.Name}}"></div>
-    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Edit"}}</button></div>
-  </div>
-</form>
-</details>
-
 <h3>{{T "Flows"}}</h3>
 <table class="table table-striped">
 <thead><tr><th>{{T "Amount"}}</th><th>{{T "Category"}}</th><th>{{T "Description"}}</th><th>{{T "Operator"}}</th><th>{{T "Time"}}</th><th>{{T "Actions"}}</th></tr></thead>
 <tbody>
 {{range .Flows}}
 <tr>
-  <td>{{.Amount}}</td>
+  <td>{{.Amount}} {{.Currency}}</td>
   <td>{{(index $.Categories .CategoryID).Name}}</td>
   <td>{{.Description}}</td>
   <td>{{.Operator}}</td>
@@ -131,5 +61,108 @@
 <form method="POST" action="/famoney/wallet/{{.Wallet.ID}}/delete" class="mt-4" onsubmit="return confirm('{{T "Confirm"}}');">
   <button type="submit" class="btn btn-danger">{{T "Delete"}}</button>
 </form>
-{{end}}
 
+<div class="modal fade" id="addFlowModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{T "Add"}} {{T "Amount"}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="action" value="flow">
+        <div class="mb-3"><input class="form-control" name="amount" placeholder="{{T "Amount"}}"></div>
+        <div class="mb-3">
+          <select name="currency" class="form-select">
+            {{range $.Currencies}}<option value="{{.}}">{{.}}</option>{{end}}
+          </select>
+        </div>
+        <div class="mb-3">
+          <select name="category" class="form-select">
+            {{range $id, $c := .Categories}}
+              <option value="{{$id}}">{{$c.Name}}</option>
+            {{end}}
+          </select>
+        </div>
+        <div class="mb-3"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
+        <button type="submit" class="btn btn-primary">{{T "Add"}}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="updateBalanceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{T "UpdateBalance"}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="action" value="balance">
+        <div class="mb-3"><input class="form-control" name="amount" placeholder="{{T "Balance"}}"></div>
+        <div class="mb-3">
+          <select name="currency" class="form-select">
+            {{range $.Currencies}}<option value="{{.}}">{{.}}</option>{{end}}
+          </select>
+        </div>
+        <div class="mb-3">
+          <select name="category" class="form-select">
+            {{range $id, $c := .Categories}}
+              <option value="{{$id}}">{{$c.Name}}</option>
+            {{end}}
+          </select>
+        </div>
+        <div class="mb-3"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
+        <button type="submit" class="btn btn-primary">{{T "Confirm"}}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="shareWalletModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{T "ShareWallet"}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="action" value="share">
+        <div class="mb-3"><input class="form-control" name="username" list="userlist" placeholder="{{T "Username"}}"></div>
+        <datalist id="userlist">{{range .Users}}<option value="{{.}}">{{.}}</option>{{end}}</datalist>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
+        <button type="submit" class="btn btn-primary">{{T "Share"}}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="editWalletModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{T "EditWallet"}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="action" value="rename">
+        <div class="mb-3"><input class="form-control" name="name" value="{{.Wallet.Name}}"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
+        <button type="submit" class="btn btn-primary">{{T "Edit"}}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{end}}

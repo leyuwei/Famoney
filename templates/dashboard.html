@@ -1,59 +1,113 @@
 {{define "content"}}
 <h2>{{T "Dashboard"}}</h2>
 
-<details class="mb-4">
-<summary>{{T "CreateWallet"}}</summary>
-<form method="POST" action="/famoney/wallet/create" class="row g-2 mt-2">
-  <div class="col-md-4"><input class="form-control" name="name" placeholder="{{T "WalletName"}}"></div>
-  <div class="col-md-4">
-    <select class="form-select" name="currency">
-      {{range .Currencies}}
-        <option value="{{.}}">{{.}}</option>
+<div class="row mb-4">
+  <div class="col-md-6">
+    <h5>{{T "ByCurrency"}}</h5>
+    <ul class="list-group">
+      {{range $cur, $bal := .CurrencyTotals}}
+      <li class="list-group-item d-flex justify-content-between align-items-center">{{$cur}}<span>{{printf "%.2f" $bal}}</span></li>
+      {{else}}
+      <li class="list-group-item">{{T "NoWallets"}}</li>
       {{end}}
-    </select>
+    </ul>
   </div>
-  <div class="col-md-2"><button type="submit" class="btn btn-success w-100">{{T "Add"}}</button></div>
-</form>
-</details>
+  <div class="col-md-6">
+    <h5>{{T "ByCategory"}}</h5>
+    <ul class="list-group">
+      {{range $cid, $bal := .CategoryTotals}}
+      <li class="list-group-item d-flex justify-content-between align-items-center">{{(index $.CategoriesMap $cid).Name}}<span>{{printf "%.2f" $bal}}</span></li>
+      {{else}}
+      <li class="list-group-item">{{T "NoFlows"}}</li>
+      {{end}}
+    </ul>
+  </div>
+</div>
 
-<details class="mb-4">
-<summary>{{T "AddCategory"}}</summary>
-<form method="POST" action="/famoney/category/add" class="row g-2 mt-2">
-  <div class="col-md-6"><input class="form-control" name="name" placeholder="{{T "Category"}}"></div>
-  <div class="col-md-2"><button type="submit" class="btn btn-success w-100">{{T "Add"}}</button></div>
-</form>
-</details>
-
-<details class="mb-4">
-<summary>{{T "EditCategories"}}</summary>
-<ul class="list-unstyled mt-2">
-{{range .Categories}}
-  <li>
-    <form method="POST" action="/famoney/category/update" class="row g-2 mb-2">
-      <input type="hidden" name="id" value="{{.ID}}">
-      <div class="col-md-6"><input class="form-control" name="name" value="{{.Name}}"></div>
-      <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Edit"}}</button></div>
-    </form>
-  </li>
-{{end}}
-</ul>
-</details>
+<div class="mb-3">
+  <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#createWalletModal">{{T "CreateWallet"}}</button>
+  <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">{{T "AddCategory"}}</button>
+  <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editCategoriesModal">{{T "EditCategories"}}</button>
+</div>
 
 <div class="row">
 {{range .Wallets}}
   <div class="col-md-4 mb-3">
-    <div class="card">
-      <div class="card-body">
-        <h4 class="card-title">{{.Name}}</h4>
-        {{range $cur, $bal := .Balances}}
-        <p class="card-text">{{T "Balance"}}: {{$bal}} {{$cur}} (~{{printf "%.2f" (Convert $bal $cur $.BaseCurrency)}} {{$.BaseCurrency}})</p>
-        {{end}}
-        <a href="/famoney/wallet/{{.ID}}" class="btn btn-primary">{{T "View"}}</a>
-      </div>
+    <div class="wallet-card">
+      <h4 class="card-title">{{.Name}}</h4>
+      {{range $cur, $bal := .Balances}}
+      <p class="card-text">{{T "Balance"}}: {{$bal}} {{$cur}} (~{{printf "%.2f" (Convert $bal $cur $.BaseCurrency)}} {{$.BaseCurrency}})</p>
+      {{end}}
+      <a href="/famoney/wallet/{{.ID}}" class="btn btn-light btn-sm">{{T "View"}}</a>
     </div>
   </div>
 {{else}}
   <p>{{T "NoWallets"}}</p>
 {{end}}
 </div>
+
+<div class="modal fade" id="createWalletModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" action="/famoney/wallet/create" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{T "CreateWallet"}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3"><input class="form-control" name="name" placeholder="{{T "WalletName"}}"></div>
+        <div class="mb-3">
+          <select class="form-select" name="currency">
+            {{range .Currencies}}<option value="{{.}}">{{.}}</option>{{end}}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
+        <button type="submit" class="btn btn-success">{{T "Add"}}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" action="/famoney/category/add" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{T "AddCategory"}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3"><input class="form-control" name="name" placeholder="{{T "Category"}}"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
+        <button type="submit" class="btn btn-success">{{T "Add"}}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="editCategoriesModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{T "EditCategories"}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
+      </div>
+      <div class="modal-body">
+        {{range .Categories}}
+        <form method="POST" action="/famoney/category/update" class="input-group mb-2">
+          <input type="hidden" name="id" value="{{.ID}}">
+          <input class="form-control" name="name" value="{{.Name}}">
+          <button class="btn btn-primary" type="submit">{{T "Edit"}}</button>
+        </form>
+        {{end}}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {{end}}
