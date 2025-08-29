@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"log"
@@ -66,8 +67,10 @@ func updateCurrencyRates() {
 		log.Println("failed to decode currency rates", err)
 		return
 	}
-	currencyRates = data.Rates
-	currencyRates["USD"] = 1
+	currencyRates = map[string]float64{"USD": 1}
+	for k, v := range data.Rates {
+		currencyRates[k] = v
+	}
 }
 
 func currencyList() []string {
@@ -141,10 +144,24 @@ func newSessionID() string {
 }
 
 func initDB() {
-	dsn := os.Getenv("DB_DSN")
-	if dsn == "" {
-		dsn = "user:password@tcp(127.0.0.1:3306)/famoney?parseTime=true"
+	user := os.Getenv("DB_USER")
+	pass := os.Getenv("DB_PASSWORD")
+	if user == "" || pass == "" {
+		log.Fatal("DB_USER and DB_PASSWORD must be set")
 	}
+	host := os.Getenv("DB_HOST")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	port := os.Getenv("DB_PORT")
+	if port == "" {
+		port = "3306"
+	}
+	name := os.Getenv("DB_NAME")
+	if name == "" {
+		name = "famoney"
+	}
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", user, pass, host, port, name)
 	var err error
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
