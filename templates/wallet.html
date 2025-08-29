@@ -1,12 +1,21 @@
 {{define "content"}}
 <h2>{{.Wallet.Name}}</h2>
-<p>{{T "Balance"}}: {{.Wallet.Balance}} {{.Wallet.Currency}}</p>
+{{range $cur, $bal := .Wallet.Balances}}
+<p>{{T "Balance"}}: {{$bal}} {{$cur}}</p>
+{{end}}
 
 <h3>{{T "Add"}} {{T "Amount"}}</h3>
 <form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
   <input type="hidden" name="action" value="flow">
   <div class="row g-2">
-    <div class="col-md-3"><input class="form-control" name="amount" placeholder="{{T "Amount"}}"></div>
+    <div class="col-md-2"><input class="form-control" name="amount" placeholder="{{T "Amount"}}"></div>
+    <div class="col-md-2">
+      <select name="currency" class="form-select">
+        {{range $.Currencies}}
+          <option value="{{.}}">{{.}}</option>
+        {{end}}
+      </select>
+    </div>
     <div class="col-md-3">
       <select name="category" class="form-select">
         {{range $id, $c := .Categories}}
@@ -14,7 +23,7 @@
         {{end}}
       </select>
     </div>
-    <div class="col-md-4"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
+    <div class="col-md-3"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
     <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
   </div>
 </form>
@@ -23,7 +32,14 @@
 <form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
   <input type="hidden" name="action" value="balance">
   <div class="row g-2">
-    <div class="col-md-3"><input class="form-control" name="amount" placeholder="{{T "Balance"}}"></div>
+    <div class="col-md-2"><input class="form-control" name="amount" placeholder="{{T "Balance"}}"></div>
+    <div class="col-md-2">
+      <select name="currency" class="form-select">
+        {{range $.Currencies}}
+          <option value="{{.}}">{{.}}</option>
+        {{end}}
+      </select>
+    </div>
     <div class="col-md-3">
       <select name="category" class="form-select">
         {{range $id, $c := .Categories}}
@@ -31,7 +47,25 @@
         {{end}}
       </select>
     </div>
-    <div class="col-md-4"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
+    <div class="col-md-3"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
+  </div>
+</form>
+
+<h3>Share Wallet</h3>
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
+  <input type="hidden" name="action" value="share">
+  <div class="row g-2">
+    <div class="col-md-6"><input class="form-control" name="username" placeholder="Username"></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
+  </div>
+</form>
+
+<h3>Edit Wallet</h3>
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}" class="mb-4">
+  <input type="hidden" name="action" value="rename">
+  <div class="row g-2">
+    <div class="col-md-6"><input class="form-control" name="name" value="{{.Wallet.Name}}"></div>
     <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
   </div>
 </form>
