@@ -61,10 +61,10 @@ Family Finance Management Website built with Go and HTML templates.
 
    ```bash
    sudo tee /etc/default/famoney >/dev/null <<'EOF'
-DB_USER=your_db_user_here
-DB_PASSWORD=your_db_password_here
-EXRATE_API=your_api_value_here
-EOF
+   DB_USER=your_db_user_here
+   DB_PASSWORD=your_db_password_here
+   EXRATE_API=your_api_value_here
+   EOF
    sudo chmod 600 /etc/default/famoney
    ```
 
