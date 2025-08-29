@@ -1,5 +1,6 @@
 {{define "content"}}
 <h2>{{T "Dashboard"}}</h2>
+<h5>{{T "TotalBalance"}}: {{FormatMoney .TotalBalance}} {{.BaseCurrency}}</h5>
 
 <div class="row mb-4">
   <div class="col-md-6">
@@ -16,7 +17,7 @@
     <h5>{{T "ByCategory"}}</h5>
     <ul class="list-group">
       {{range $cid, $bal := .CategoryTotals}}
-      <li class="list-group-item d-flex justify-content-between align-items-center">{{(index $.CategoriesMap $cid).Name}}<span>{{FormatMoney $bal}}</span></li>
+      <li class="list-group-item d-flex justify-content-between align-items-center category-item" data-cid="{{$cid}}" data-name="{{(index $.CategoriesMap $cid).Name}}">{{(index $.CategoriesMap $cid).Name}}<span>{{FormatMoney $bal}}</span></li>
       {{else}}
       <li class="list-group-item">{{T "NoFlows"}}</li>
       {{end}}
@@ -100,6 +101,23 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
       </div>
     </div>
+</div>
+</div>
+
+<div class="modal fade" id="categoryDetailModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="categoryDetailModalLabel">{{T "CategoryDetails"}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{T "Close"}}"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group" id="categoryDetailList"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{T "Close"}}</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -123,6 +141,36 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+});
+
+var categoryData = {{ToJSON .CategoryWallets}};
+var baseCurrency = '{{.BaseCurrency}}';
+function formatMoney(num) {
+  return num.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+document.querySelectorAll('.category-item').forEach(function(el){
+  el.addEventListener('click', function(){
+    var cid = this.dataset.cid;
+    var name = this.dataset.name;
+    var list = document.getElementById('categoryDetailList');
+    list.innerHTML = '';
+    var data = categoryData[cid] || {};
+    for (var w in data) {
+      var li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = w + '<span>' + formatMoney(data[w]) + ' ' + baseCurrency + '</span>';
+      list.appendChild(li);
+    }
+    if (!list.children.length) {
+      var li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.textContent = '{{T "NoFlows"}}';
+      list.appendChild(li);
+    }
+    document.getElementById('categoryDetailModalLabel').textContent = name;
+    var m = new bootstrap.Modal(document.getElementById('categoryDetailModal'));
+    m.show();
+  });
 });
 </script>
 

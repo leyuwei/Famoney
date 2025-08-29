@@ -47,7 +47,7 @@
   <td>{{.CreatedAt}}</td>
   <td>
     <a href="/famoney/flow/{{.ID}}/edit" class="btn btn-sm btn-secondary">{{T "Edit"}}</a>
-    <form method="POST" action="/famoney/flow/{{.ID}}/delete" class="d-inline">
+    <form method="POST" action="/famoney/flow/{{.ID}}/delete" class="d-inline" onsubmit="return confirm('{{T "Confirm"}}');">
       <button type="submit" class="btn btn-sm btn-danger">{{T "Delete"}}</button>
     </form>
   </td>
