@@ -133,92 +133,94 @@ func formatMoney(amount float64) string {
 
 var translations = map[string]map[string]string{
 	"en": {
-		"Login":          "Login",
-		"Register":       "Register",
-		"Username":       "Username",
-		"Password":       "Password",
-		"Dashboard":      "Dashboard",
-		"CreateWallet":   "Create Wallet",
-		"WalletName":     "Wallet Name",
-		"Currency":       "Currency",
-		"Balance":        "Balance",
-		"Color":          "Color",
-		"Add":            "Add",
-		"Logout":         "Logout",
-		"Category":       "Category",
-		"Amount":         "Amount",
-		"Description":    "Description",
-		"Submit":         "Submit",
-		"Confirm":        "Confirm",
-		"Edit":           "Edit",
-		"Delete":         "Delete",
-		"View":           "View",
-		"Share":          "Share",
-		"Time":           "Time",
-		"Flows":          "Flows",
-		"Operator":       "Operator",
-		"NoFlows":        "No flows",
-		"NoWallets":      "No wallets",
-		"Actions":        "Actions",
-		"AddCategory":    "Add Category",
-		"UpdateBalance":  "Update Balance",
-		"ShareWallet":    "Share Wallet",
-		"EditWallet":     "Edit Wallet",
-		"EditCategories": "Edit Categories",
-		"ViewCategories": "View Categories",
-		"CategoryInUse":  "Category has money and cannot be deleted",
-		"Summary":        "Summary",
-		"TotalBalance":   "Total Balance",
-		"ByCurrency":     "By Currency",
-		"ByCategory":     "By Category",
-		"Close":          "Close",
-		"AllUsers":       "All Users",
-		"SharedUsers":    "Shared Users",
-		"Unshare":        "Cancel Share",
+		"Login":           "Login",
+		"Register":        "Register",
+		"Username":        "Username",
+		"Password":        "Password",
+		"Dashboard":       "Dashboard",
+		"CreateWallet":    "Create Wallet",
+		"WalletName":      "Wallet Name",
+		"Currency":        "Currency",
+		"Balance":         "Balance",
+		"Color":           "Color",
+		"Add":             "Add",
+		"Logout":          "Logout",
+		"Category":        "Category",
+		"Amount":          "Amount",
+		"Description":     "Description",
+		"Submit":          "Submit",
+		"Confirm":         "Confirm",
+		"Edit":            "Edit",
+		"Delete":          "Delete",
+		"View":            "View",
+		"Share":           "Share",
+		"Time":            "Time",
+		"Flows":           "Flows",
+		"Operator":        "Operator",
+		"NoFlows":         "No flows",
+		"NoWallets":       "No wallets",
+		"Actions":         "Actions",
+		"AddCategory":     "Add Category",
+		"UpdateBalance":   "Update Balance",
+		"ShareWallet":     "Share Wallet",
+		"EditWallet":      "Edit Wallet",
+		"EditCategories":  "Edit Categories",
+		"ViewCategories":  "View Categories",
+		"CategoryInUse":   "Category has money and cannot be deleted",
+		"Summary":         "Summary",
+		"TotalBalance":    "Total Balance",
+		"ByCurrency":      "By Currency",
+		"ByCategory":      "By Category",
+		"Close":           "Close",
+		"AllUsers":        "All Users",
+		"SharedUsers":     "Shared Users",
+		"Unshare":         "Cancel Share",
+		"CategoryDetails": "Category Details",
 	},
 	"zh": {
-		"Login":          "登录",
-		"Register":       "注册",
-		"Username":       "用户名",
-		"Password":       "密码",
-		"Dashboard":      "仪表盘",
-		"CreateWallet":   "创建钱包",
-		"WalletName":     "钱包名称",
-		"Currency":       "货币",
-		"Balance":        "余额",
-		"Color":          "颜色",
-		"Add":            "添加",
-		"Logout":         "退出登录",
-		"Category":       "类别",
-		"Amount":         "金额",
-		"Description":    "描述",
-		"Submit":         "提交",
-		"Confirm":        "确认",
-		"Edit":           "编辑",
-		"Delete":         "删除",
-		"View":           "查看",
-		"Share":          "分享",
-		"Time":           "时间",
-		"Flows":          "流水",
-		"Operator":       "操作人",
-		"NoFlows":        "无流水",
-		"NoWallets":      "没有钱包",
-		"Actions":        "操作",
-		"AddCategory":    "添加类别",
-		"UpdateBalance":  "更新余额",
-		"ShareWallet":    "分享钱包",
-		"EditWallet":     "编辑钱包",
-		"EditCategories": "编辑类别",
-		"ViewCategories": "查看类别",
-		"CategoryInUse":  "该类别在某些钱包有资金，不能删除",
-		"Summary":        "汇总",
-		"TotalBalance":   "总余额",
-		"ByCurrency":     "按货币",
-		"ByCategory":     "按类别",
-		"Close":          "关闭",
-		"AllUsers":       "系统用户",
-		"SharedUsers":    "已分享用户",
-		"Unshare":        "取消分享",
+		"Login":           "登录",
+		"Register":        "注册",
+		"Username":        "用户名",
+		"Password":        "密码",
+		"Dashboard":       "仪表盘",
+		"CreateWallet":    "创建钱包",
+		"WalletName":      "钱包名称",
+		"Currency":        "货币",
+		"Balance":         "余额",
+		"Color":           "颜色",
+		"Add":             "添加",
+		"Logout":          "退出登录",
+		"Category":        "类别",
+		"Amount":          "金额",
+		"Description":     "描述",
+		"Submit":          "提交",
+		"Confirm":         "确认",
+		"Edit":            "编辑",
+		"Delete":          "删除",
+		"View":            "查看",
+		"Share":           "分享",
+		"Time":            "时间",
+		"Flows":           "流水",
+		"Operator":        "操作人",
+		"NoFlows":         "无流水",
+		"NoWallets":       "没有钱包",
+		"Actions":         "操作",
+		"AddCategory":     "添加类别",
+		"UpdateBalance":   "更新余额",
+		"ShareWallet":     "分享钱包",
+		"EditWallet":      "编辑钱包",
+		"EditCategories":  "编辑类别",
+		"ViewCategories":  "查看类别",
+		"CategoryInUse":   "该类别在某些钱包有资金，不能删除",
+		"Summary":         "汇总",
+		"TotalBalance":    "总余额",
+		"ByCurrency":      "按货币",
+		"ByCategory":      "按类别",
+		"Close":           "关闭",
+		"AllUsers":        "系统用户",
+		"SharedUsers":     "已分享用户",
+		"Unshare":         "取消分享",
+		"CategoryDetails": "类别详情",
 	},
 }
 
@@ -340,6 +342,7 @@ func render(w http.ResponseWriter, r *http.Request, tmpl string, data map[string
 		"T":           func(key string) string { return T(lang, key) },
 		"Convert":     convert,
 		"FormatMoney": formatMoney,
+		"ToJSON":      func(v interface{}) template.JS { b, _ := json.Marshal(v); return template.JS(b) },
 	}
 	data["Lang"] = lang
 	data["BaseCurrency"] = base
@@ -406,6 +409,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	userWallets := []*Wallet{}
 	currencyTotals := map[string]float64{}
 	walletIDs := []int{}
+	walletNames := map[int]string{}
 	for rows.Next() {
 		w := &Wallet{Balances: map[string]float64{}}
 		if err := rows.Scan(&w.ID, &w.Name, &w.Color); err == nil {
@@ -421,10 +425,15 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 			filterBalances(w.Balances, base)
 			userWallets = append(userWallets, w)
 			walletIDs = append(walletIDs, w.ID)
+			walletNames[w.ID] = w.Name
 		}
 	}
 
 	filterBalances(currencyTotals, base)
+	totalBalance := 0.0
+	for cur, bal := range currencyTotals {
+		totalBalance += convert(bal, cur, base)
+	}
 
 	catRows, _ := db.Query("SELECT id, name FROM categories")
 	categories := []*Category{}
@@ -438,6 +447,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	categoryTotals := map[int]float64{}
+	categoryWallets := map[int]map[string]float64{}
 	if len(walletIDs) > 0 {
 		placeholders := make([]string, len(walletIDs))
 		args := make([]interface{}, len(walletIDs))
@@ -445,25 +455,32 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 			placeholders[i] = "?"
 			args[i] = id
 		}
-		q := fmt.Sprintf("SELECT category_id, SUM(amount), currency FROM flows WHERE wallet_id IN (%s) GROUP BY category_id, currency", strings.Join(placeholders, ","))
+		q := fmt.Sprintf("SELECT wallet_id, category_id, SUM(amount), currency FROM flows WHERE wallet_id IN (%s) GROUP BY wallet_id, category_id, currency", strings.Join(placeholders, ","))
 		rows2, _ := db.Query(q, args...)
 		for rows2.Next() {
-			var cid int
+			var wid, cid int
 			var sum float64
 			var cur string
-			if err := rows2.Scan(&cid, &sum, &cur); err == nil {
-				categoryTotals[cid] += convert(sum, cur, base)
+			if err := rows2.Scan(&wid, &cid, &sum, &cur); err == nil {
+				conv := convert(sum, cur, base)
+				categoryTotals[cid] += conv
+				if categoryWallets[cid] == nil {
+					categoryWallets[cid] = map[string]float64{}
+				}
+				categoryWallets[cid][walletNames[wid]] += conv
 			}
 		}
 	}
 
 	data := map[string]interface{}{
-		"Wallets":        userWallets,
-		"Categories":     categories,
-		"CategoriesMap":  categoriesMap,
-		"Currencies":     currencyList(),
-		"CurrencyTotals": currencyTotals,
-		"CategoryTotals": categoryTotals,
+		"Wallets":         userWallets,
+		"Categories":      categories,
+		"CategoriesMap":   categoriesMap,
+		"Currencies":      currencyList(),
+		"CurrencyTotals":  currencyTotals,
+		"CategoryTotals":  categoryTotals,
+		"CategoryWallets": categoryWallets,
+		"TotalBalance":    totalBalance,
 	}
 	if r.URL.Query().Get("err") == "category_in_use" {
 		data["CategoryInUse"] = true
