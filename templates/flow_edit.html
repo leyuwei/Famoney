@@ -1,7 +1,7 @@
 {{define "content"}}
 <h2>{{T "Edit"}} {{T "Amount"}}</h2>
 <form method="POST" class="row g-2 w-75">
-  <div class="col-md-3"><input class="form-control" name="amount" value="{{.Flow.Amount}}"></div>
+  <div class="col-md-3"><input class="form-control" name="amount" value="{{printf "%.2f" .Flow.Amount}}"></div>
   <div class="col-md-3">
     <select name="currency" class="form-select">
       {{range $.Currencies}}<option value="{{.}}" {{if eq $.Flow.Currency .}}selected{{end}}>{{.}}</option>{{end}}

@@ -7,7 +7,7 @@
       <div class="card text-center">
         <div class="card-body">
           <h5 class="card-title">{{$cur}}</h5>
-          <p class="card-text">{{printf "%.2f" $bal}}</p>
+          <p class="card-text">{{FormatMoney $bal}}</p>
         </div>
       </div>
     </div>
@@ -27,7 +27,7 @@
   <thead><tr><th>{{T "Category"}}</th><th>{{T "Balance"}}</th></tr></thead>
   <tbody>
   {{range $cid, $bal := .Wallet.CategoryBalances}}
-    <tr><td>{{(index $.Categories $cid).Name}}</td><td>{{printf "%.2f" $bal}}</td></tr>
+    <tr><td>{{(index $.Categories $cid).Name}}</td><td>{{FormatMoney $bal}}</td></tr>
   {{else}}
     <tr><td colspan="2">{{T "NoFlows"}}</td></tr>
   {{end}}
@@ -40,7 +40,7 @@
 <tbody>
 {{range .Flows}}
 <tr>
-  <td>{{.Amount}} {{.Currency}}</td>
+  <td>{{FormatMoney .Amount}} {{.Currency}}</td>
   <td>{{(index $.Categories .CategoryID).Name}}</td>
   <td>{{.Description}}</td>
   <td>{{.Operator}}</td>

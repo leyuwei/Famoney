@@ -6,7 +6,7 @@
     <h5>{{T "ByCurrency"}}</h5>
     <ul class="list-group">
       {{range $cur, $bal := .CurrencyTotals}}
-      <li class="list-group-item d-flex justify-content-between align-items-center">{{$cur}}<span>{{printf "%.2f" $bal}}</span></li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">{{$cur}}<span>{{FormatMoney $bal}}</span></li>
       {{else}}
       <li class="list-group-item">{{T "NoWallets"}}</li>
       {{end}}
@@ -16,7 +16,7 @@
     <h5>{{T "ByCategory"}}</h5>
     <ul class="list-group">
       {{range $cid, $bal := .CategoryTotals}}
-      <li class="list-group-item d-flex justify-content-between align-items-center">{{(index $.CategoriesMap $cid).Name}}<span>{{printf "%.2f" $bal}}</span></li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">{{(index $.CategoriesMap $cid).Name}}<span>{{FormatMoney $bal}}</span></li>
       {{else}}
       <li class="list-group-item">{{T "NoFlows"}}</li>
       {{end}}
@@ -35,7 +35,7 @@
     <div class="wallet-card" style="{{if .Color}}background: {{.Color}};{{end}}">
       <h4 class="card-title">{{.Name}}</h4>
       {{range $cur, $bal := .Balances}}
-      <p class="card-text">{{T "Balance"}}: {{$bal}} {{$cur}} (~{{printf "%.2f" (Convert $bal $cur $.BaseCurrency)}} {{$.BaseCurrency}})</p>
+      <p class="card-text">{{T "Balance"}}: {{FormatMoney $bal}} {{$cur}} (~{{FormatMoney (Convert $bal $cur $.BaseCurrency)}} {{$.BaseCurrency}})</p>
       {{end}}
       <a href="/famoney/wallet/{{.ID}}" class="btn btn-light btn-sm">{{T "View"}}</a>
     </div>
