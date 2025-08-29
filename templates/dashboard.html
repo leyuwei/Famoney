@@ -6,7 +6,9 @@
     <h5>{{T "ByCurrency"}}</h5>
     <ul class="list-group">
       {{range $cur, $bal := .CurrencyTotals}}
+      {{if or (ne $bal 0) (eq $cur $.BaseCurrency)}}
       <li class="list-group-item d-flex justify-content-between align-items-center">{{$cur}}<span>{{printf "%.2f" $bal}}</span></li>
+      {{end}}
       {{else}}
       <li class="list-group-item">{{T "NoWallets"}}</li>
       {{end}}
@@ -35,7 +37,9 @@
     <div class="wallet-card" style="{{if .Color}}background: {{.Color}};{{end}}">
       <h4 class="card-title">{{.Name}}</h4>
       {{range $cur, $bal := .Balances}}
+      {{if or (ne $bal 0) (eq $cur $.BaseCurrency)}}
       <p class="card-text">{{T "Balance"}}: {{$bal}} {{$cur}} (~{{printf "%.2f" (Convert $bal $cur $.BaseCurrency)}} {{$.BaseCurrency}})</p>
+      {{end}}
       {{end}}
       <a href="/famoney/wallet/{{.ID}}" class="btn btn-light btn-sm">{{T "View"}}</a>
     </div>

@@ -3,6 +3,7 @@
   <h2>{{.Wallet.Name}}</h2>
   <div class="row balance-cards mb-3">
   {{range $cur, $bal := .Wallet.Balances}}
+  {{if or (ne $bal 0) (eq $cur $.BaseCurrency)}}
     <div class="col-md-3">
       <div class="card text-center">
         <div class="card-body">
@@ -11,6 +12,7 @@
         </div>
       </div>
     </div>
+  {{end}}
   {{end}}
   </div>
 </div>

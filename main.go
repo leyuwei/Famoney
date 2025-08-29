@@ -381,12 +381,22 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 				var cur string
 				var bal float64
 				if err := balRows.Scan(&cur, &bal); err == nil {
-					w.Balances[cur] = bal
-					currencyTotals[cur] += bal
+					if bal != 0 || cur == base {
+						w.Balances[cur] = bal
+						currencyTotals[cur] += bal
+					}
 				}
+			}
+			if _, ok := w.Balances[base]; !ok {
+				w.Balances[base] = 0
 			}
 			userWallets = append(userWallets, w)
 			walletIDs = append(walletIDs, w.ID)
+		}
+	}
+	if len(userWallets) > 0 {
+		if _, ok := currencyTotals[base]; !ok {
+			currencyTotals[base] = 0
 		}
 	}
 
@@ -512,8 +522,13 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 		var cur string
 		var bal float64
 		if err := balRows.Scan(&cur, &bal); err == nil {
-			wallet.Balances[cur] = bal
+			if bal != 0 || cur == base {
+				wallet.Balances[cur] = bal
+			}
 		}
+	}
+	if _, ok := wallet.Balances[base]; !ok {
+		wallet.Balances[base] = 0
 	}
 
 	if r.Method == "POST" {
@@ -566,8 +581,13 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 			var cur string
 			var bal float64
 			if err := balRows.Scan(&cur, &bal); err == nil {
-				wallet.Balances[cur] = bal
+				if bal != 0 || cur == base {
+					wallet.Balances[cur] = bal
+				}
 			}
+		}
+		if _, ok := wallet.Balances[base]; !ok {
+			wallet.Balances[base] = 0
 		}
 	}
 
