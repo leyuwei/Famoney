@@ -1,0 +1,1 @@
+ALTER TABLE wallets ADD COLUMN color VARCHAR(7) DEFAULT '#b5651d';

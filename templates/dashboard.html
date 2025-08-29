@@ -33,7 +33,7 @@
 <div class="row">
 {{range .Wallets}}
   <div class="col-md-4 mb-3">
-    <div class="wallet-card">
+    <div class="wallet-card" style="{{if .Color}}background: {{.Color}};{{end}}">
       <h4 class="card-title">{{.Name}}</h4>
       {{range $cur, $bal := .Balances}}
       <p class="card-text">{{T "Balance"}}: {{$bal}} {{$cur}} (~{{printf "%.2f" (Convert $bal $cur $.BaseCurrency)}} {{$.BaseCurrency}})</p>
@@ -59,6 +59,10 @@
           <select class="form-select" name="currency">
             {{range .Currencies}}<option value="{{.}}">{{.}}</option>{{end}}
           </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{T "Color"}}</label>
+          <input type="color" class="form-control form-control-color" name="color" value="#b5651d">
         </div>
       </div>
       <div class="modal-footer">

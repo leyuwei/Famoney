@@ -6,7 +6,8 @@ CREATE TABLE users (
 
 CREATE TABLE wallets (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255)
+  name VARCHAR(255),
+  color VARCHAR(7) DEFAULT '#b5651d'
 );
 
 CREATE TABLE wallet_balances (
