@@ -1,8 +1,31 @@
 {{define "content"}}
 <h2>{{.Wallet.Name}}</h2>
+
+<h3>{{T "Balance"}}</h3>
+<div class="row balance-cards mb-3">
 {{range $cur, $bal := .Wallet.Balances}}
-<p>{{T "Balance"}}: {{$bal}} {{$cur}}</p>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <h5 class="card-title">{{$cur}}</h5>
+        <p class="card-text">{{printf "%.2f" $bal}}</p>
+      </div>
+    </div>
+  </div>
 {{end}}
+</div>
+
+<h3>{{T "Category"}} {{T "Balance"}}</h3>
+<table class="table table-bordered w-50">
+  <thead><tr><th>{{T "Category"}}</th><th>{{T "Balance"}}</th></tr></thead>
+  <tbody>
+  {{range $cid, $bal := .Wallet.CategoryBalances}}
+    <tr><td>{{(index $.Categories $cid).Name}}</td><td>{{printf "%.2f" $bal}}</td></tr>
+  {{else}}
+    <tr><td colspan="2">{{T "NoFlows"}}</td></tr>
+  {{end}}
+  </tbody>
+</table>
 
 <details class="mb-4">
 <summary>{{T "Add"}} {{T "Amount"}}</summary>
@@ -25,7 +48,7 @@
       </select>
     </div>
     <div class="col-md-3"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
-    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Add"}}</button></div>
   </div>
 </form>
 </details>
@@ -51,7 +74,7 @@
       </select>
     </div>
     <div class="col-md-3"><input class="form-control" name="description" placeholder="{{T "Description"}}"></div>
-    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Confirm"}}</button></div>
   </div>
 </form>
 </details>
@@ -65,7 +88,7 @@
     <datalist id="userlist">
       {{range .Users}}<option value="{{.}}">{{.}}</option>{{end}}
     </datalist>
-    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Share"}}</button></div>
   </div>
 </form>
 </details>
@@ -76,25 +99,37 @@
   <input type="hidden" name="action" value="rename">
   <div class="row g-2">
     <div class="col-md-6"><input class="form-control" name="name" value="{{.Wallet.Name}}"></div>
-    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Edit"}}</button></div>
   </div>
 </form>
 </details>
 
-<h3>Flows</h3>
+<h3>{{T "Flows"}}</h3>
 <table class="table table-striped">
-<thead><tr><th>{{T "Amount"}}</th><th>{{T "Category"}}</th><th>{{T "Description"}}</th><th>Time</th></tr></thead>
+<thead><tr><th>{{T "Amount"}}</th><th>{{T "Category"}}</th><th>{{T "Description"}}</th><th>{{T "Operator"}}</th><th>{{T "Time"}}</th><th>{{T "Actions"}}</th></tr></thead>
 <tbody>
 {{range .Flows}}
 <tr>
   <td>{{.Amount}}</td>
   <td>{{(index $.Categories .CategoryID).Name}}</td>
   <td>{{.Description}}</td>
+  <td>{{.Operator}}</td>
   <td>{{.CreatedAt}}</td>
+  <td>
+    <a href="/famoney/flow/{{.ID}}/edit" class="btn btn-sm btn-secondary">{{T "Edit"}}</a>
+    <form method="POST" action="/famoney/flow/{{.ID}}/delete" class="d-inline">
+      <button type="submit" class="btn btn-sm btn-danger">{{T "Delete"}}</button>
+    </form>
+  </td>
 </tr>
 {{else}}
-<tr><td colspan="4">No flows</td></tr>
+<tr><td colspan="6">{{T "NoFlows"}}</td></tr>
 {{end}}
 </tbody>
 </table>
+
+<form method="POST" action="/famoney/wallet/{{.Wallet.ID}}/delete" class="mt-4" onsubmit="return confirm('{{T "Confirm"}}');">
+  <button type="submit" class="btn btn-danger">{{T "Delete"}}</button>
+</form>
 {{end}}
+

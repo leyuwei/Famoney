@@ -32,7 +32,7 @@
     <form method="POST" action="/famoney/category/update" class="row g-2 mb-2">
       <input type="hidden" name="id" value="{{.ID}}">
       <div class="col-md-6"><input class="form-control" name="name" value="{{.Name}}"></div>
-      <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Submit"}}</button></div>
+      <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">{{T "Edit"}}</button></div>
     </form>
   </li>
 {{end}}
@@ -48,12 +48,12 @@
         {{range $cur, $bal := .Balances}}
         <p class="card-text">{{T "Balance"}}: {{$bal}} {{$cur}} (~{{printf "%.2f" (Convert $bal $cur $.BaseCurrency)}} {{$.BaseCurrency}})</p>
         {{end}}
-        <a href="/famoney/wallet/{{.ID}}" class="btn btn-primary">{{T "Add"}}</a>
+        <a href="/famoney/wallet/{{.ID}}" class="btn btn-primary">{{T "View"}}</a>
       </div>
     </div>
   </div>
 {{else}}
-  <p>No wallets</p>
+  <p>{{T "NoWallets"}}</p>
 {{end}}
 </div>
 {{end}}
