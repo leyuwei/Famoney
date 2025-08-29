@@ -44,3 +44,24 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
+.wallet-card {
+  position: relative;
+  background: linear-gradient(135deg, #b5651d, #8b4513);
+  color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.wallet-card::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 8px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 4px;
+}
