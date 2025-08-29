@@ -99,6 +99,17 @@ func convert(amount float64, from, to string) float64 {
 	return usd / rateTo
 }
 
+func filterBalances(b map[string]float64, base string) {
+	if _, ok := b[base]; !ok {
+		b[base] = 0
+	}
+	for cur, bal := range b {
+		if bal == 0 && cur != base {
+			delete(b, cur)
+		}
+	}
+}
+
 var translations = map[string]map[string]string{
 	"en": {
 		"Login":          "Login",
@@ -385,10 +396,13 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 					currencyTotals[cur] += bal
 				}
 			}
+			filterBalances(w.Balances, base)
 			userWallets = append(userWallets, w)
 			walletIDs = append(walletIDs, w.ID)
 		}
 	}
+
+	filterBalances(currencyTotals, base)
 
 	catRows, _ := db.Query("SELECT id, name FROM categories")
 	categories := []*Category{}
@@ -515,6 +529,7 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 			wallet.Balances[cur] = bal
 		}
 	}
+	filterBalances(wallet.Balances, base)
 
 	if r.Method == "POST" {
 		action := r.FormValue("action")
@@ -569,6 +584,7 @@ func viewWalletHandler(w http.ResponseWriter, r *http.Request) {
 				wallet.Balances[cur] = bal
 			}
 		}
+		filterBalances(wallet.Balances, base)
 	}
 
 	wallet.CategoryBalances = map[int]float64{}
