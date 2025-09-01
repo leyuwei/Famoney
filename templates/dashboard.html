@@ -125,7 +125,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   var list = document.getElementById('walletList');
-  if (list) {
+  // Disable drag sorting on touch/mobile devices to avoid interfering with scrolling
+  if (list && !window.matchMedia('(pointer: coarse)').matches) {
     new Sortable(list, {
       animation: 150,
       onEnd: function() {
