@@ -4,7 +4,7 @@
 
 Family Finance Management Website built with Go and HTML templates.
 
-## Features
+## 平台用途与特点
 
 - 用户账户系统（中英双语切换，默认中文）
 - 支持创建个人或共享钱包并记录收支流水，可选择基准货币
@@ -12,9 +12,9 @@ Family Finance Management Website built with Go and HTML templates.
 - 支持多币种及汇率换算，允许负余额以便家庭活动等场景
 - HTML 前端使用可折叠表单以保持界面整洁
 
-## Database setup (MySQL)
+## 数据库准备 (MySQL)
 
-1. 安装并启动 MySQL，创建数据库与表：
+1. 安装并启动 MySQL，创建数据库与表：直接导入`init_db.sql`
 
 2. 运行环境变量写入 `/etc/default/famoney` 并设置权限：
 
@@ -29,14 +29,15 @@ Family Finance Management Website built with Go and HTML templates.
 
    systemd 服务应包含 `EnvironmentFile=/etc/default/famoney`。
 
-## Running locally
+## 服务器运行
 
 ```bash
+go mod tidy
 go build
-./famoney
 ```
 
 访问 <http://localhost:8295/famoney/> 查看页面。
+此处Go后端本地监听端口，可在`main.go`中修改，可搜索并全局替换为您的偏好端口。
 
 ## 部署指南 (Ubuntu + Nginx)
 
