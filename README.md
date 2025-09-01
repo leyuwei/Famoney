@@ -2,15 +2,15 @@
 
 <img width="1911" height="1392" alt="image" src="https://github.com/user-attachments/assets/48222ca5-4868-4240-9120-4c842537e9e2" />
 
+简洁的家庭财务管理平台
 Family Finance Management Website built with Go and HTML templates.
 
 ## 平台用途与特点
 
 - 用户账户系统（中英双语切换，默认中文）
-- 支持创建个人或共享钱包并记录收支流水，可选择基准货币
+- 支持创建个人或共享钱包，记录家庭每个人/集体收支流水，可选择基准货币
 - 钱包余额可按类别分类，并支持手动调整余额时自动生成记录
 - 支持多币种及汇率换算，允许负余额以便家庭活动等场景
-- HTML 前端使用可折叠表单以保持界面整洁
 
 ## 数据库准备 (MySQL)
 
