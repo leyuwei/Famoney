@@ -18,7 +18,7 @@ Family Finance Management Platform built with Go.
 
 1. 安装并启动 MySQL，创建数据库与表：直接导入`init_db.sql`
 
-2. 运行环境变量写入 `/etc/default/famoney` 并设置权限：
+2. 运行环境变量（3条）写入 `/etc/default/famoney` 并设置权限：
 
    ```bash
    sudo tee /etc/default/famoney >/dev/null <<'EOF'
@@ -28,6 +28,10 @@ Family Finance Management Platform built with Go.
    EOF
    sudo chmod 600 /etc/default/famoney
    ```
+
+   `DB_USER` 与 `DB_PASSWORD` 为MySQL数据库的用户名及密码。
+
+   `EXRATE_API` 为汇率公开数据平台的API，请访问 https://www.exchangerate-api.com/ 申请获取，每年有1500次免费访问次数，本平台的汇率需依赖此API获取。
 
    systemd 服务应包含 `EnvironmentFile=/etc/default/famoney`。
 
