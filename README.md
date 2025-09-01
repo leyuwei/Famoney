@@ -1,9 +1,10 @@
-# Famoney
+# Famoney - 简洁的家庭财务管理平台
 
 <img width="1911" height="1392" alt="image" src="https://github.com/user-attachments/assets/48222ca5-4868-4240-9120-4c842537e9e2" />
 
-简洁的家庭财务管理平台
-Family Finance Management Website built with Go and HTML templates.
+使用Go后端的家庭财务管理平台
+
+Family Finance Management Platform built with Go.
 
 ## 平台用途与特点
 
